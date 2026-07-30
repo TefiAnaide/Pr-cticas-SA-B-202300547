@@ -1,0 +1,84 @@
+# =========================
+# Node.js
+# =========================
+
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# =========================
+# Variables de entorno
+# =========================
+
+.env
+.env.local
+.env.*.local
+
+# Mantener el ejemplo
+!.env.example
+
+# =========================
+# Logs
+# =========================
+
+logs/
+*.log
+
+# =========================
+# Cobertura de pruebas
+# =========================
+
+coverage/
+
+# =========================
+# Archivos temporales
+# =========================
+
+.tmp/
+temp/
+tmp/
+
+# macOS
+.DS_Store
+
+# Linux
+*~
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# =========================
+# IDEs
+# =========================
+
+.vscode/
+.idea/
+
+# =========================
+# Docker
+# =========================
+
+docker-compose.override.yml
+
+# =========================
+# Archivos generados
+# =========================
+
+dist/
+build/
+
+# =========================
+# Base de datos local
+# =========================
+
+*.sqlite
+*.db
+
+# =========================
+# Otros
+# =========================
+
+.envrc

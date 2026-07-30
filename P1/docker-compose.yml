@@ -1,0 +1,46 @@
+version: "3.9"
+
+services:
+
+  postgres:
+    image: postgres:17-alpine
+    container_name: sa_p1_postgres
+
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: academia
+
+    ports:
+      - "5434:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/01_init.sql:/docker-entrypoint-initdb.d/01_init.sql
+
+  backend:
+    build: .
+
+    container_name: sa_p1_backend
+
+    restart: unless-stopped
+
+    depends_on:
+      - postgres
+
+    ports:
+      - "3001:3000"
+
+    env_file:
+      - .env
+
+    volumes:
+      - .:/app
+      - /app/node_modules
+
+    command: npm run dev
+
+volumes:
+  postgres_data:

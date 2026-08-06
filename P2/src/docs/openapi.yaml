@@ -1,0 +1,211 @@
+openapi: 3.0.3
+info:
+  title: P2 - Módulo de Registro y Login
+  description: >
+    API REST de autenticación con JWT en cookie HttpOnly, renovación
+    automática, cifrado de datos sensibles y autorización por rol
+    delegada a un microservicio independiente.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3001
+    description: Backend principal (docker compose)
+
+tags:
+  - name: Auth
+    description: Registro, login y sesión
+  - name: Protegido
+    description: Rutas protegidas por rol
+
+paths:
+  /api/auth/registro:
+    post:
+      tags: [Auth]
+      summary: Registrar un nuevo usuario
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistroInput'
+      responses:
+        '201':
+          description: Usuario creado. La cookie del JWT queda seteada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsuarioRespuesta'
+        '400':
+          description: Datos inválidos
+        '409':
+          description: Ya existe un usuario con ese correo
+
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: Iniciar sesión
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginInput'
+      responses:
+        '200':
+          description: Login correcto. La cookie del JWT queda seteada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsuarioRespuesta'
+        '401':
+          description: Credenciales inválidas
+
+  /api/auth/logout:
+    post:
+      tags: [Auth]
+      summary: Cerrar sesión (limpia la cookie del JWT)
+      responses:
+        '200':
+          description: Sesión cerrada
+
+  /api/auth/me:
+    get:
+      tags: [Auth]
+      summary: Perfil del usuario autenticado (usado por la página de confirmación)
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Datos del usuario autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsuarioRespuesta'
+        '401':
+          description: No autenticado o sesión expirada
+
+  /api/ruta1:
+    get:
+      tags: [Protegido]
+      summary: Listado de usuarios Cliente — solo rol Admin
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Lista de usuarios con rol Cliente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  clientes:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Usuario'
+        '401':
+          description: No autenticado
+        '403':
+          description: Rol sin permiso para este recurso (Cliente)
+
+  /api/ruta2:
+    put:
+      tags: [Protegido]
+      summary: Editar el propio usuario — roles Admin y Cliente
+      description: >
+        Cada usuario autenticado edita su propio registro (nombre, correo y/o contraseña).
+        Todos los campos son opcionales. El rol nunca se puede cambiar por esta vía.
+      security:
+        - cookieAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EditarUsuarioInput'
+      responses:
+        '200':
+          description: Usuario actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsuarioRespuesta'
+        '401':
+          description: No autenticado
+        '403':
+          description: Rol sin permiso para este recurso
+        '409':
+          description: El correo ya está en uso por otro usuario
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: token
+      description: JWT emitido en el login, guardado como cookie HttpOnly.
+
+  schemas:
+    RegistroInput:
+      type: object
+      required: [nombre, correo_electronico, contrasena, rol]
+      properties:
+        nombre:
+          type: string
+          example: Ana Admin
+        correo_electronico:
+          type: string
+          format: email
+          example: admin@test.com
+        contrasena:
+          type: string
+          format: password
+          minLength: 8
+          example: password123
+        rol:
+          type: string
+          enum: [Admin, Cliente]
+
+    EditarUsuarioInput:
+      type: object
+      properties:
+        nombre:
+          type: string
+        correo_electronico:
+          type: string
+          format: email
+        contrasena:
+          type: string
+          format: password
+          minLength: 8
+
+    LoginInput:
+      type: object
+      required: [correo_electronico, contrasena]
+      properties:
+        correo_electronico:
+          type: string
+          format: email
+        contrasena:
+          type: string
+          format: password
+
+    Usuario:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        nombre:
+          type: string
+        correo_electronico:
+          type: string
+        rol:
+          type: string
+        fecha_creacion:
+          type: string
+          format: date-time
+
+    UsuarioRespuesta:
+      type: object
+      properties:
+        usuario:
+          $ref: '#/components/schemas/Usuario'

@@ -1,0 +1,223 @@
+:root {
+    --morado: #7c3aed;
+    --morado-oscuro: #5b21b6;
+    --rosado: #ec4899;
+    --amarillo: #fbbf24;
+    --texto: #3b0764;
+    --texto-suave: #6b21a8;
+    --blanco: #ffffff;
+    --rojo: #dc2626;
+    --verde: #16a34a;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: linear-gradient(135deg, var(--morado) 0%, var(--rosado) 55%, var(--amarillo) 100%);
+    color: var(--texto);
+}
+
+#root {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+}
+
+.tarjeta {
+    background: var(--blanco);
+    border-radius: 20px;
+    padding: 2.5rem;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 20px 45px rgba(91, 33, 182, 0.35);
+}
+
+.tarjeta.ancha {
+    max-width: 560px;
+}
+
+h1 {
+    margin-top: 0;
+    color: var(--morado-oscuro);
+    font-size: 1.6rem;
+}
+
+p.subtitulo {
+    color: var(--texto-suave);
+    margin-top: -0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--texto-suave);
+}
+
+input,
+select {
+    padding: 0.65rem 0.8rem;
+    border-radius: 10px;
+    border: 2px solid #e9d5ff;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.15s ease;
+}
+
+input:focus,
+select:focus {
+    border-color: var(--rosado);
+}
+
+button {
+    cursor: pointer;
+    border: none;
+    border-radius: 999px;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 700;
+    background: var(--amarillo);
+    color: var(--texto);
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 18px rgba(251, 191, 36, 0.45);
+}
+
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+button.secundario {
+    background: transparent;
+    color: var(--morado-oscuro);
+    border: 2px solid var(--morado);
+}
+
+.enlace {
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--texto-suave);
+}
+
+.enlace a {
+    color: var(--rosado);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.mensaje-error {
+    background: #fee2e2;
+    color: var(--rojo);
+    border-radius: 10px;
+    padding: 0.6rem 0.8rem;
+    font-size: 0.9rem;
+}
+
+.mensaje-exito {
+    background: #dcfce7;
+    color: var(--verde);
+    border-radius: 10px;
+    padding: 0.6rem 0.8rem;
+    font-size: 0.9rem;
+}
+
+.badge-rol {
+    display: inline-block;
+    background: var(--morado);
+    color: var(--blanco);
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.datos-usuario {
+    background: #faf5ff;
+    border-radius: 14px;
+    padding: 1rem 1.25rem;
+    margin: 1.25rem 0;
+}
+
+.datos-usuario dt {
+    font-size: 0.8rem;
+    color: var(--texto-suave);
+    font-weight: 600;
+}
+
+.datos-usuario dd {
+    margin: 0 0 0.75rem 0;
+    font-size: 1rem;
+}
+
+.acciones {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.resultado-ruta {
+    border-radius: 10px;
+    padding: 0.6rem 0.8rem;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+}
+
+.resultado-ruta.permitido {
+    background: #dcfce7;
+    color: var(--verde);
+}
+
+.resultado-ruta.denegado {
+    background: #fee2e2;
+    color: var(--rojo);
+}
+
+h2 {
+    font-size: 1.1rem;
+    color: var(--morado-oscuro);
+    margin-bottom: 0.25rem;
+}
+
+hr {
+    border: none;
+    border-top: 1px solid #e9d5ff;
+    margin: 1.5rem 0;
+}
+
+.lista-clientes {
+    list-style: none;
+    margin: 0.75rem 0 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.lista-clientes li {
+    background: #faf5ff;
+    border-radius: 10px;
+    padding: 0.6rem 0.9rem;
+    font-size: 0.9rem;
+}

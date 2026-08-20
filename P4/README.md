@@ -523,6 +523,4 @@ por debajo eso hace un `POST /authorize` HTTP a `authz-service`. Si mañana
 se reemplaza esa llamada HTTP por una libreria de RBAC local, solo cambia
 `security/authz_client.py` — ninguna ruta se entera.
 
-## Pendiente para completar la practica
 
-- Documentacion tecnica adicional que el equipo considere util (capturas del Swagger, colecciones de Postman exportadas, etc. son opcionales — el contrato ya queda cubierto por el Swagger unificado).

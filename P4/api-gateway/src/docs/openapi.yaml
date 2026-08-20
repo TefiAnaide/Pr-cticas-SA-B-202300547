@@ -1,0 +1,670 @@
+openapi: 3.0.3
+info:
+  title: Practica 4 — API unificada (via API Gateway)
+  description: >
+    Contrato completo del sistema, tal como se ve a traves del API Gateway.
+    Todas las rutas usan el mismo host (http://localhost:8080), asi que se
+    puede probar el flujo end-to-end completo (registro -> login -> crear
+    producto -> crear pedido -> generar reporte) desde esta misma pagina
+    usando "Try it out": las cookies de sesion se comparten porque todo pasa
+    por el mismo origen. Cada microservicio ademas expone su propio Swagger
+    generado (ver README), este documento los junta en uno solo.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080
+    description: API Gateway (docker compose)
+
+tags:
+  - name: Auth
+    description: Registro, login, sesion y administracion de usuarios (auth-service)
+  - name: Protegido
+    description: Rutas de ejemplo protegidas por rol (auth-service)
+  - name: Productos
+    description: Catalogo de productos (productos-service)
+  - name: Reportes
+    description: Reportes de inventario (reportes-service)
+  - name: Pedidos
+    description: Compras (pedidos-service)
+
+paths:
+  /api/auth/registro:
+    post:
+      tags: [Auth]
+      summary: Registrar un usuario nuevo (siempre rol Cliente)
+      description: El campo "rol" no se acepta; todo registro publico queda como Cliente.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistroInput'
+      responses:
+        '201':
+          description: Usuario creado. Cookie de sesion (token) seteada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsuarioRespuesta'
+        '400':
+          description: Datos invalidos
+        '409':
+          description: Ya existe un usuario con ese correo
+
+  /api/auth/admins:
+    post:
+      tags: [Auth]
+      summary: Crear un Admin nuevo — solo Admin
+      description: >
+        Requiere sesion de Admin (verificado via authz-service, recurso
+        "usuarios:crear-admin"). No inicia sesion como el usuario creado.
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistroInput'
+      responses:
+        '201':
+          description: Admin creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsuarioRespuesta'
+        '401':
+          description: No autenticado
+        '403':
+          description: Quien hace la peticion no es Admin
+
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: Iniciar sesion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginInput'
+      responses:
+        '200':
+          description: Login correcto. Cookie de sesion (token) seteada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsuarioRespuesta'
+        '401':
+          description: Credenciales invalidas
+
+  /api/auth/logout:
+    post:
+      tags: [Auth]
+      summary: Cerrar sesion
+      responses:
+        '200':
+          description: Sesion cerrada
+
+  /api/auth/me:
+    get:
+      tags: [Auth]
+      summary: Perfil del usuario autenticado
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Datos del usuario autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsuarioRespuesta'
+        '401':
+          description: No autenticado
+
+  /api/ruta1:
+    get:
+      tags: [Protegido]
+      summary: Listado de usuarios Cliente — solo Admin
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Lista de usuarios con rol Cliente
+        '403':
+          description: Rol sin permiso
+
+  /api/ruta2:
+    put:
+      tags: [Protegido]
+      summary: Editar el propio usuario — Admin y Cliente
+      security:
+        - cookieAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EditarUsuarioInput'
+      responses:
+        '200':
+          description: Usuario actualizado
+
+  /api/productos:
+    get:
+      tags: [Productos]
+      summary: Listar productos
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Catalogo completo
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Producto'
+    post:
+      tags: [Productos]
+      summary: Crear un producto — solo Admin
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductoInput'
+      responses:
+        '201':
+          description: Producto creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Producto'
+        '403':
+          description: Rol sin permiso (no es Admin)
+
+  /api/productos/{id}:
+    get:
+      tags: [Productos]
+      summary: Obtener un producto por id
+      security:
+        - cookieAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ProductoId'
+      responses:
+        '200':
+          description: Producto encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Producto'
+        '404':
+          description: No encontrado
+    put:
+      tags: [Productos]
+      summary: Editar un producto — solo Admin
+      security:
+        - cookieAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ProductoId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductoActualizarInput'
+      responses:
+        '200':
+          description: Producto actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Producto'
+    delete:
+      tags: [Productos]
+      summary: Eliminar un producto — solo Admin
+      security:
+        - cookieAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ProductoId'
+      responses:
+        '200':
+          description: Producto eliminado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Producto'
+
+  /api/productos/{id}/stock:
+    patch:
+      tags: [Productos]
+      summary: Ajustar stock (usado internamente por pedidos-service)
+      security:
+        - cookieAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ProductoId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AjusteStockInput'
+      responses:
+        '200':
+          description: Stock ajustado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Producto'
+        '409':
+          description: Stock insuficiente para el ajuste solicitado
+
+  /api/productos/graphql:
+    post:
+      tags: [Productos]
+      summary: GraphQL de productos
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GraphQLInput'
+            examples:
+              listar:
+                value:
+                  query: "{ productos { id nombre precio stock categoria } }"
+      responses:
+        '200':
+          description: Respuesta GraphQL
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GraphQLOutput'
+
+  /api/reportes:
+    get:
+      tags: [Reportes]
+      summary: Listar el historial de reportes
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Historial de reportes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Reporte'
+
+  /api/reportes/{id}:
+    get:
+      tags: [Reportes]
+      summary: Obtener un reporte por id
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Reporte encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reporte'
+        '404':
+          description: No encontrado
+
+  /api/reportes/inventario:
+    post:
+      tags: [Reportes]
+      summary: Generar un reporte de inventario — solo Admin
+      description: Consulta productos-service, calcula totales y guarda el resultado.
+      security:
+        - cookieAuth: []
+      responses:
+        '201':
+          description: Reporte generado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reporte'
+        '403':
+          description: Rol sin permiso (no es Admin)
+
+  /api/reportes/graphql:
+    post:
+      tags: [Reportes]
+      summary: GraphQL de reportes
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GraphQLInput'
+            examples:
+              listar:
+                value:
+                  query: "{ reportes { id tipo resultado fechaGeneracion } }"
+      responses:
+        '200':
+          description: Respuesta GraphQL
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GraphQLOutput'
+
+  /api/pedidos:
+    get:
+      tags: [Pedidos]
+      summary: Listar pedidos (Cliente ve los propios, Admin ve todos)
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Lista de pedidos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pedido'
+    post:
+      tags: [Pedidos]
+      summary: Crear un pedido
+      description: >
+        Valida stock/precio contra productos-service, descuenta el stock
+        comprado y persiste el pedido. Si el stock no alcanza, responde 409
+        y no deja el stock modificado.
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PedidoInput'
+      responses:
+        '201':
+          description: Pedido creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pedido'
+        '409':
+          description: Stock no disponible
+
+  /api/pedidos/{id}:
+    get:
+      tags: [Pedidos]
+      summary: Obtener un pedido por id (dueño o Admin)
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Pedido encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pedido'
+        '403':
+          description: El pedido no le pertenece y no es Admin
+        '404':
+          description: No encontrado
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: token
+      description: JWT emitido en el login, guardado como cookie HttpOnly.
+
+  parameters:
+    ProductoId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    RegistroInput:
+      type: object
+      required: [nombre, correo_electronico, contrasena]
+      properties:
+        nombre:
+          type: string
+          example: Ana Cliente
+        correo_electronico:
+          type: string
+          format: email
+          example: ana@test.com
+        contrasena:
+          type: string
+          format: password
+          minLength: 8
+          example: password123
+
+    LoginInput:
+      type: object
+      required: [correo_electronico, contrasena]
+      properties:
+        correo_electronico:
+          type: string
+          format: email
+        contrasena:
+          type: string
+          format: password
+
+    EditarUsuarioInput:
+      type: object
+      properties:
+        nombre:
+          type: string
+        correo_electronico:
+          type: string
+          format: email
+        contrasena:
+          type: string
+          format: password
+          minLength: 8
+
+    Usuario:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        nombre:
+          type: string
+        correo_electronico:
+          type: string
+        rol:
+          type: string
+          enum: [Admin, Cliente]
+        fecha_creacion:
+          type: string
+          format: date-time
+
+    UsuarioRespuesta:
+      type: object
+      properties:
+        usuario:
+          $ref: '#/components/schemas/Usuario'
+
+    ProductoInput:
+      type: object
+      required: [nombre, precio, stock, categoria]
+      properties:
+        nombre:
+          type: string
+          example: Laptop
+        descripcion:
+          type: string
+          example: Laptop 15 pulgadas
+        precio:
+          type: number
+          format: decimal
+          example: 999.99
+        stock:
+          type: integer
+          example: 10
+        categoria:
+          type: string
+          example: Electronica
+
+    ProductoActualizarInput:
+      type: object
+      properties:
+        nombre:
+          type: string
+        descripcion:
+          type: string
+        precio:
+          type: number
+        stock:
+          type: integer
+        categoria:
+          type: string
+
+    AjusteStockInput:
+      type: object
+      required: [delta]
+      properties:
+        delta:
+          type: integer
+          description: Negativo descuenta, positivo repone.
+          example: -1
+
+    Producto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        nombre:
+          type: string
+        descripcion:
+          type: string
+          nullable: true
+        precio:
+          type: number
+        stock:
+          type: integer
+        categoria:
+          type: string
+        fecha_creacion:
+          type: string
+          format: date-time
+
+    Reporte:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        tipo:
+          type: string
+          example: inventario
+        resultado:
+          type: object
+          example:
+            total_productos: 12
+            valor_total_inventario: "4599.50"
+            productos_por_categoria:
+              Electronica: 8
+              Hogar: 4
+        fecha_generacion:
+          type: string
+          format: date-time
+
+    ItemPedidoInput:
+      type: object
+      required: [producto_id, cantidad]
+      properties:
+        producto_id:
+          type: string
+          format: uuid
+        cantidad:
+          type: integer
+          example: 2
+
+    PedidoInput:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemPedidoInput'
+
+    ItemPedido:
+      type: object
+      properties:
+        producto_id:
+          type: string
+          format: uuid
+        nombre:
+          type: string
+        precio_unitario:
+          type: number
+        cantidad:
+          type: integer
+        subtotal:
+          type: number
+
+    Pedido:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        usuario_id:
+          type: string
+          format: uuid
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemPedido'
+        total:
+          type: number
+        estado:
+          type: string
+          example: CONFIRMADO
+        fecha_creacion:
+          type: string
+          format: date-time
+
+    GraphQLInput:
+      type: object
+      required: [query]
+      properties:
+        query:
+          type: string
+        variables:
+          type: object
+
+    GraphQLOutput:
+      type: object
+      properties:
+        data:
+          type: object

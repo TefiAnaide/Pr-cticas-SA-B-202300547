@@ -17,9 +17,6 @@ Gateway, usando al menos 2 lenguajes de programacion y GraphQL en al menos
 
 - [Arquitectura](#arquitectura)
 - [Diagramas](#diagramas)
-  - [Diagrama de arquitectura (comunicacion entre servicios)](#diagrama-de-arquitectura-comunicacion-entre-servicios)
-  - [Diagrama de despliegue](#diagrama-de-despliegue)
-  - [Diagrama ER (una base de datos por servicio)](#diagrama-er-una-base-de-datos-por-servicio)
 - [Registro y creacion de Admins](#registro-y-creacion-de-admins)
 - [Autenticacion entre servicios](#autenticacion-entre-servicios)
 - [Flujo de una compra (pedidos-service)](#flujo-de-una-compra-pedidos-service)

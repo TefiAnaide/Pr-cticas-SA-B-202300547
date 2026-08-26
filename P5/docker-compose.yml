@@ -1,0 +1,189 @@
+services:
+
+  # ---------- Auth (Practica 2, reutilizado tal cual) ----------
+  postgres-auth:
+    image: postgres:17-alpine
+    container_name: sa_p4_postgres_auth
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: aut
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres_auth_data:/var/lib/postgresql/data
+      - ./database/auth_init.sql:/docker-entrypoint-initdb.d/01_init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d aut"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  authz-service:
+    build: ./authz-service
+    container_name: sa_p4_authz
+    restart: unless-stopped
+    ports:
+      - "4001:4000"
+    env_file:
+      - ./authz-service/.env
+    volumes:
+      - ./authz-service:/app
+      - /app/node_modules
+    command: npm run dev
+
+  auth-service:
+    build: ./auth-service
+    container_name: sa_p4_auth
+    restart: unless-stopped
+    depends_on:
+      postgres-auth:
+        condition: service_healthy
+      authz-service:
+        condition: service_started
+    ports:
+      - "3002:3000"
+    env_file:
+      - ./auth-service/.env
+    volumes:
+      - ./auth-service:/app
+      - /app/node_modules
+    command: npm run dev
+
+  # ---------- Productos (nuevo, Python) ----------
+  postgres-productos:
+    image: postgres:17-alpine
+    container_name: sa_p4_postgres_productos
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: productos_db
+    ports:
+      - "5436:5432"
+    volumes:
+      - postgres_productos_data:/var/lib/postgresql/data
+      - ./database/productos_init.sql:/docker-entrypoint-initdb.d/01_init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d productos_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  productos-service:
+    build: ./productos-service
+    container_name: sa_p4_productos
+    restart: unless-stopped
+    depends_on:
+      postgres-productos:
+        condition: service_healthy
+      authz-service:
+        condition: service_started
+    ports:
+      - "8001:8000"
+    env_file:
+      - ./productos-service/.env
+    volumes:
+      - ./productos-service:/app
+
+  # ---------- Reportes (nuevo, Python) ----------
+  postgres-reportes:
+    image: postgres:17-alpine
+    container_name: sa_p4_postgres_reportes
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: reportes_db
+    ports:
+      - "5437:5432"
+    volumes:
+      - postgres_reportes_data:/var/lib/postgresql/data
+      - ./database/reportes_init.sql:/docker-entrypoint-initdb.d/01_init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d reportes_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  reportes-service:
+    build: ./reportes-service
+    container_name: sa_p4_reportes
+    restart: unless-stopped
+    depends_on:
+      postgres-reportes:
+        condition: service_healthy
+      authz-service:
+        condition: service_started
+      productos-service:
+        condition: service_started
+    ports:
+      - "8002:8000"
+    env_file:
+      - ./reportes-service/.env
+    volumes:
+      - ./reportes-service:/app
+
+  # ---------- Pedidos (nuevo, Python) ----------
+  postgres-pedidos:
+    image: postgres:17-alpine
+    container_name: sa_p4_postgres_pedidos
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: pedidos_db
+    ports:
+      - "5438:5432"
+    volumes:
+      - postgres_pedidos_data:/var/lib/postgresql/data
+      - ./database/pedidos_init.sql:/docker-entrypoint-initdb.d/01_init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d pedidos_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  pedidos-service:
+    build: ./pedidos-service
+    container_name: sa_p4_pedidos
+    restart: unless-stopped
+    depends_on:
+      postgres-pedidos:
+        condition: service_healthy
+      authz-service:
+        condition: service_started
+      productos-service:
+        condition: service_started
+    ports:
+      - "8003:8000"
+    env_file:
+      - ./pedidos-service/.env
+    volumes:
+      - ./pedidos-service:/app
+
+  # ---------- API Gateway ----------
+  api-gateway:
+    build: ./api-gateway
+    container_name: sa_p4_gateway
+    restart: unless-stopped
+    depends_on:
+      - auth-service
+      - productos-service
+      - reportes-service
+      - pedidos-service
+    ports:
+      - "8080:8080"
+    env_file:
+      - ./api-gateway/.env
+    volumes:
+      - ./api-gateway:/app
+      - /app/node_modules
+    command: npm run dev
+
+volumes:
+  postgres_auth_data:
+  postgres_productos_data:
+  postgres_reportes_data:
+  postgres_pedidos_data:

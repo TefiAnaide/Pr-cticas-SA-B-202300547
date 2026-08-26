@@ -1,0 +1,8 @@
+CREATE TABLE IF NOT EXISTS pedidos (
+    id UUID PRIMARY KEY,
+    usuario_id UUID NOT NULL,
+    items JSONB NOT NULL,
+    total NUMERIC(12, 2) NOT NULL CHECK (total >= 0),
+    estado VARCHAR(20) NOT NULL DEFAULT 'CONFIRMADO',
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

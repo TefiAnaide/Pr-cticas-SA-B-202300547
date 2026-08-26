@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS reportes (
+    id UUID PRIMARY KEY,
+    tipo VARCHAR(50) NOT NULL,
+    resultado JSONB NOT NULL,
+    fecha_generacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

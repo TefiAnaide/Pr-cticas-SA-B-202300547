@@ -1,0 +1,134 @@
+# Valores por defecto de pedidos-service.
+# Los valores especificos de ambiente van en values-dev.yaml / values-prod.yaml
+# del chart PADRE, bajo la clave "pedidos-service:".
+
+# Permite instalar el chart padre sin este subchart todavia
+# (--set pedidos-service.enabled=false) mientras se termina el resto.
+enabled: true
+
+replicaCount: 1
+
+# Rolling update sin caida de servicio: maxUnavailable=0 obliga a que el
+# pod nuevo pase su readinessProbe ANTES de tumbar el viejo (nunca hay
+# menos replicas listas que las que habia). maxSurge=1 es lo que permite
+# esto incluso con replicaCount=1 (dev): durante el rollout existen
+# temporalmente 2 pods (el viejo + el nuevo) en vez de escalar a 0 primero.
+strategy:
+  type: RollingUpdate
+  maxUnavailable: 0
+  maxSurge: 1
+
+image:
+  repository: p5-pedidos-service
+  pullPolicy: IfNotPresent
+  tag: "runtime"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  # Ninguno de los 6 microservicios llama a la API de Kubernetes desde su
+  # codigo (no usan ningun cliente de Kubernetes) — no hay razon para que
+  # el pod cargue un token que nunca va a usar. El Role/RoleBinding de
+  # este subchart (ver templates/role.yaml) siguen aplicando a la
+  # identidad de la ServiceAccount independientemente de esto.
+  automount: false
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+# Config no sensible inyectada via ConfigMap (ver templates/configmap.yaml).
+# DB_PASSWORD y JWT_SECRET NO van aqui — vienen de Secrets externos
+# (el "postgres" de Bitnami y el "sa-p5-shared-secrets" del chart padre).
+config:
+  logLevel: "info"
+  dbHost: "postgres"
+  dbPort: 5432
+  dbUser: "postgres"
+  dbName: "pedidos_db"
+  authzServiceUrl: "http://authz-service:4000"
+  authzMaxRetries: 3
+  authzRetryBackoffMs: 300
+  productosServiceUrl: "http://productos-service:8000"
+
+podSecurityContext: {}
+
+securityContext:
+  runAsNonRoot: true
+  # El Dockerfile hace "USER app" (nombre, no UID numerico). Kubernetes no
+  # puede resolver ese nombre sin ejecutar el contenedor, asi que
+  # runAsNonRoot por si solo no basta — hay que fijar el UID numerico que
+  # ese usuario tiene DENTRO de la imagen (confirmado con `docker run ... id`).
+  runAsUser: 999
+  runAsGroup: 999
+  readOnlyRootFilesystem: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: ["ALL"]
+
+service:
+  type: ClusterIP
+  port: 8000
+
+resources:
+  requests:
+    cpu: 75m
+    memory: 128Mi
+  limits:
+    cpu: 250m
+    memory: 256Mi
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 3
+  periodSeconds: 5
+  failureThreshold: 3
+
+# El pool de psycopg2 se crea de forma sincrona al importar
+# src/database/connection.py (hasta 10 intentos x 2s antes de que Uvicorn
+# arranque). En un cold-start completo del stack (los 9 pods compitiendo
+# por CPU a la vez), eso puede superar un presupuesto de 30s.
+startupProbe:
+  httpGet:
+    path: /health
+    port: http
+  periodSeconds: 5
+  failureThreshold: 20
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70
+
+# Minimo de pods vivos garantizado durante una disrupcion VOLUNTARIA
+# (kubectl drain, upgrade de nodo, cluster-autoscaler) — no aplica a
+# rollouts normales de Deployment, que no pasan por la Eviction API.
+# minAvailable: 1 con replicaCount: 1 (ambiente dev) bloquea CUALQUIER
+# eviccion mientras solo haya 1 replica viva; con 2+ (prod, o cuando el
+# HPA escala) ya permite drenar nodos uno a la vez sin dejar el servicio
+# en cero.
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+volumes: []
+volumeMounts: []
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

@@ -22,5 +22,14 @@ class Settings:
 
     PRODUCTOS_SERVICE_URL: str = os.getenv("PRODUCTOS_SERVICE_URL", "http://productos-service:8000")
 
+    RABBITMQ_HOST: str = os.getenv("RABBITMQ_HOST", "rabbitmq")
+    RABBITMQ_PORT: int = int(os.getenv("RABBITMQ_PORT", "5672"))
+    RABBITMQ_USER: str = os.getenv("RABBITMQ_USER", "guest")
+    RABBITMQ_PASSWORD: str = os.getenv("RABBITMQ_PASSWORD", "guest")
+    RABBITMQ_QUEUE: str = os.getenv("RABBITMQ_QUEUE", "resumenes-cronjob")
+
+    # Usado por el Cronjob 1 (registro de latido) — ver src/scripts/cronjob_heartbeat.py
+    STUDENT_CARNE: str = os.getenv("STUDENT_CARNE", "202300547")
+
 
 settings = Settings()

@@ -1,0 +1,23 @@
+{{/*
+Rol de minimo privilegio para la ServiceAccount de este servicio: solo
+puede leer (get) SU PROPIO ConfigMap, nada mas. Ninguno de los 6
+microservicios llama hoy a la API de Kubernetes desde su codigo (no usan
+ningun cliente de Kubernetes) — este Role demuestra el patron de minimo
+privilegio para si en el futuro alguno necesita introspeccion de su
+config via API, en vez de solo variables de entorno. Los Secrets
+deliberadamente NO son legibles via RBAC (ni siquiera de lectura propia):
+siguen siendo accesibles unicamente como variables de entorno inyectadas
+por el pod spec, nunca por llamada a la API.
+*/}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "productos-service.fullname" . }}
+  labels:
+    {{- include "productos-service.labels" . | nindent 4 }}
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    resourceNames:
+      - {{ include "productos-service.fullname" . }}
+    verbs: ["get"]

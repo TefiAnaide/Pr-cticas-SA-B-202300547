@@ -1,0 +1,50 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "reportes-service.fullname" . }}-cronjob-heartbeat
+  labels:
+    {{- include "reportes-service.labels" . | nindent 4 }}
+    app.kubernetes.io/component: cronjob-heartbeat
+spec:
+  schedule: {{ .Values.cronjobs.heartbeat.schedule | quote }}
+  timeZone: {{ .Values.cronjobs.heartbeat.timeZone | quote }}
+  concurrencyPolicy: {{ .Values.cronjobs.heartbeat.concurrencyPolicy }}
+  successfulJobsHistoryLimit: {{ .Values.cronjobs.heartbeat.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.cronjobs.heartbeat.failedJobsHistoryLimit }}
+  jobTemplate:
+    spec:
+      backoffLimit: {{ .Values.cronjobs.heartbeat.backoffLimit }}
+      template:
+        metadata:
+          labels:
+            {{- include "reportes-service.selectorLabels" . | nindent 12 }}
+            app.kubernetes.io/component: cronjob-heartbeat
+        spec:
+          restartPolicy: OnFailure
+          serviceAccountName: {{ include "reportes-service.fullname" . }}-cronjob-heartbeat
+          {{- with .Values.podSecurityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          containers:
+            - name: cronjob-heartbeat
+              {{- with .Values.securityContext }}
+              securityContext:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
+              image: "{{ .Values.image.repository }}:{{ required "reportes-service: falta definir image.tag" .Values.image.tag }}"
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              command: ["python", "-m", "src.scripts.cronjob_heartbeat"]
+              envFrom:
+                - configMapRef:
+                    name: {{ include "reportes-service.fullname" . }}-config
+              env:
+                - name: DB_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres
+                      key: postgres-password
+              {{- with .Values.cronjobs.heartbeat.resources }}
+              resources:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}

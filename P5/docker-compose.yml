@@ -21,7 +21,9 @@ services:
       retries: 10
 
   authz-service:
-    build: ./authz-service
+    build:
+      context: ./authz-service
+      target: dev
     container_name: sa_p4_authz
     restart: unless-stopped
     ports:
@@ -34,7 +36,9 @@ services:
     command: npm run dev
 
   auth-service:
-    build: ./auth-service
+    build:
+      context: ./auth-service
+      target: dev
     container_name: sa_p4_auth
     restart: unless-stopped
     depends_on:
@@ -72,7 +76,9 @@ services:
       retries: 10
 
   productos-service:
-    build: ./productos-service
+    build:
+      context: ./productos-service
+      target: dev
     container_name: sa_p4_productos
     restart: unless-stopped
     depends_on:
@@ -108,7 +114,9 @@ services:
       retries: 10
 
   reportes-service:
-    build: ./reportes-service
+    build:
+      context: ./reportes-service
+      target: dev
     container_name: sa_p4_reportes
     restart: unless-stopped
     depends_on:
@@ -146,7 +154,9 @@ services:
       retries: 10
 
   pedidos-service:
-    build: ./pedidos-service
+    build:
+      context: ./pedidos-service
+      target: dev
     container_name: sa_p4_pedidos
     restart: unless-stopped
     depends_on:
@@ -165,7 +175,9 @@ services:
 
   # ---------- API Gateway ----------
   api-gateway:
-    build: ./api-gateway
+    build:
+      context: ./api-gateway
+      target: dev
     container_name: sa_p4_gateway
     restart: unless-stopped
     depends_on:

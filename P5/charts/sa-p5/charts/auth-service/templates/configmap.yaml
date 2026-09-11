@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "auth-service.fullname" . }}-config
+  labels:
+    {{- include "auth-service.labels" . | nindent 4 }}
+data:
+  PORT: {{ .Values.service.port | quote }}
+  LOG_LEVEL: {{ .Values.config.logLevel | default "info" | quote }}
+  DB_HOST: {{ required "auth-service: falta config.dbHost" .Values.config.dbHost | quote }}
+  DB_PORT: {{ .Values.config.dbPort | default 5432 | quote }}
+  DB_USER: {{ .Values.config.dbUser | default "postgres" | quote }}
+  DB_NAME: {{ required "auth-service: falta config.dbName" .Values.config.dbName | quote }}
+  JWT_EXPIRES_IN: {{ .Values.config.jwtExpiresIn | default "15m" | quote }}
+  JWT_REFRESH_GRACE_SECONDS: {{ .Values.config.jwtRefreshGraceSeconds | default 300 | quote }}
+  COOKIE_SECURE: {{ .Values.config.cookieSecure | default false | quote }}
+  AUTHZ_SERVICE_URL: {{ required "auth-service: falta config.authzServiceUrl" .Values.config.authzServiceUrl | quote }}
+  AUTHZ_MAX_RETRIES: {{ .Values.config.authzMaxRetries | default 3 | quote }}
+  AUTHZ_RETRY_BACKOFF_MS: {{ .Values.config.authzRetryBackoffMs | default 300 | quote }}
+  SEED_ADMIN_EMAIL: {{ .Values.config.seedAdminEmail | quote }}
+  SEED_ADMIN_NOMBRE: {{ .Values.config.seedAdminNombre | quote }}

@@ -1,0 +1,92 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "reportes-service.fullname" . }}-consumer
+  labels:
+    {{- include "reportes-service.labels" . | nindent 4 }}
+    app.kubernetes.io/component: consumer
+spec:
+  replicas: {{ .Values.consumer.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "reportes-service.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: consumer
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+      labels:
+        {{- include "reportes-service.labels" . | nindent 8 }}
+        app.kubernetes.io/component: consumer
+    spec:
+      serviceAccountName: {{ include "reportes-service.fullname" . }}-consumer
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: consumer
+          {{- with .Values.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          image: "{{ .Values.image.repository }}:{{ required "reportes-service: falta definir image.tag" .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["python", "-m", "src.scripts.consumer_resumenes"]
+          envFrom:
+            - configMapRef:
+                name: {{ include "reportes-service.fullname" . }}-config
+          env:
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres
+                  key: postgres-password
+            - name: RABBITMQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq
+                  key: rabbitmq-password
+          {{- with .Values.consumer.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: health
+              mountPath: /health
+          startupProbe:
+            exec:
+              command:
+                - python3
+                - -c
+                - |
+                  import sys, time
+                  edad = time.time() - float(open("{{ .Values.consumer.heartbeatPath }}").read())
+                  sys.exit(0 if edad < {{ .Values.consumer.startupProbe.freshnessSeconds }} else 1)
+            periodSeconds: {{ .Values.consumer.startupProbe.periodSeconds }}
+            failureThreshold: {{ .Values.consumer.startupProbe.failureThreshold }}
+          livenessProbe:
+            exec:
+              command:
+                - python3
+                - -c
+                - |
+                  import sys, time
+                  edad = time.time() - float(open("{{ .Values.consumer.heartbeatPath }}").read())
+                  sys.exit(0 if edad < {{ .Values.consumer.livenessProbe.freshnessSeconds }} else 1)
+            periodSeconds: {{ .Values.consumer.livenessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.consumer.livenessProbe.failureThreshold }}
+          readinessProbe:
+            exec:
+              command:
+                - python3
+                - -c
+                - |
+                  import sys, time
+                  edad = time.time() - float(open("{{ .Values.consumer.heartbeatPath }}").read())
+                  sys.exit(0 if edad < {{ .Values.consumer.readinessProbe.freshnessSeconds }} else 1)
+            periodSeconds: {{ .Values.consumer.readinessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.consumer.readinessProbe.failureThreshold }}
+      volumes:
+        - name: health
+          emptyDir: {}

@@ -1,0 +1,138 @@
+# Overrides para ambiente de produccion.
+# Uso: helm install sa-p5 . --create-namespace -n sa-p5 -f values-prod.yaml
+
+# En prod el HPA puede llevar cada uno de los 6 microservicios hasta 5
+# replicas (30 pods de aplicacion en el peor caso) — la cuota de dev se
+# quedaria corta y bloquearia el propio autoescalado.
+resourceQuota:
+  hard:
+    requests.cpu: "6000m"
+    requests.memory: "6Gi"
+    limits.cpu: "12000m"
+    limits.memory: "12Gi"
+    pods: "60"
+    persistentvolumeclaims: "5"
+
+postgresql:
+  primary:
+    persistence:
+      size: 5Gi
+
+authz-service:
+  replicaCount: 2
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+  image:
+    tag: "runtime"
+  config:
+    logLevel: "info"
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+
+api-gateway:
+  replicaCount: 2
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+  image:
+    tag: "runtime"
+  config:
+    logLevel: "info"
+  resources:
+    requests:
+      cpu: 100m
+      memory: 96Mi
+    limits:
+      cpu: 300m
+      memory: 192Mi
+
+auth-service:
+  replicaCount: 2
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+  image:
+    tag: "runtime"
+  config:
+    logLevel: "info"
+    cookieSecure: true
+  resources:
+    requests:
+      cpu: 75m
+      memory: 96Mi
+    limits:
+      cpu: 250m
+      memory: 192Mi
+
+productos-service:
+  replicaCount: 2
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+  image:
+    tag: "runtime"
+  config:
+    logLevel: "info"
+  resources:
+    requests:
+      cpu: 75m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+
+reportes-service:
+  replicaCount: 2
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+  image:
+    tag: "runtime"
+  config:
+    logLevel: "info"
+  resources:
+    requests:
+      cpu: 75m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+
+pedidos-service:
+  replicaCount: 2
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+  image:
+    tag: "runtime"
+  config:
+    logLevel: "info"
+  resources:
+    requests:
+      cpu: 75m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+
+# Los 6 subcharts ya tienen su bloque de overrides arriba. Las credenciales
+# de postgresql/rabbitmq/sharedSecrets van en values.example.yaml (o su
+# copia real, no versionada).

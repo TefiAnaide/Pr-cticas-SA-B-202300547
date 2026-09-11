@@ -1,0 +1,144 @@
+# Valores por defecto de auth-service.
+# Los valores especificos de ambiente van en values-dev.yaml / values-prod.yaml
+# del chart PADRE, bajo la clave "auth-service:".
+
+# Permite instalar el chart padre sin este subchart todavia
+# (--set auth-service.enabled=false) mientras se termina el resto.
+enabled: true
+
+replicaCount: 1
+
+# Rolling update sin caida de servicio: maxUnavailable=0 obliga a que el
+# pod nuevo pase su readinessProbe ANTES de tumbar el viejo (nunca hay
+# menos replicas listas que las que habia). maxSurge=1 es lo que permite
+# esto incluso con replicaCount=1 (dev): durante el rollout existen
+# temporalmente 2 pods (el viejo + el nuevo) en vez de escalar a 0 primero.
+strategy:
+  type: RollingUpdate
+  maxUnavailable: 0
+  maxSurge: 1
+
+image:
+  repository: p5-auth-service
+  pullPolicy: IfNotPresent
+  tag: "runtime"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  # Ninguno de los 6 microservicios llama a la API de Kubernetes desde su
+  # codigo (no usan ningun cliente de Kubernetes) — no hay razon para que
+  # el pod cargue un token que nunca va a usar. El Role/RoleBinding de
+  # este subchart (ver templates/role.yaml) siguen aplicando a la
+  # identidad de la ServiceAccount independientemente de esto.
+  automount: false
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+# Config no sensible inyectada via ConfigMap (ver templates/configmap.yaml).
+# DB_PASSWORD, JWT_SECRET, AES_SECRET_KEY, HMAC_SECRET_KEY y
+# SEED_ADMIN_PASSWORD NO van aqui — van en Secrets (ver templates/secret.yaml
+# de este subchart y templates/shared-secrets.yaml del chart padre).
+config:
+  logLevel: "info"
+  dbHost: "postgres"
+  dbPort: 5432
+  dbUser: "postgres"
+  dbName: "aut"
+  jwtExpiresIn: "15m"
+  jwtRefreshGraceSeconds: 300
+  cookieSecure: false
+  authzServiceUrl: "http://authz-service:4000"
+  authzMaxRetries: 3
+  authzRetryBackoffMs: 300
+  seedAdminEmail: "admin@practica4.com"
+  seedAdminNombre: "Administrador"
+
+# Secretos propios de este servicio (ver templates/secret.yaml). Vacios a
+# proposito: sin valor real, "helm template/install" falla con un mensaje
+# claro. Los valores ficticios de ejemplo estan en values.example.yaml del
+# chart padre, bajo la clave "auth-service.secrets".
+secrets:
+  aesSecretKey: ""
+  hmacSecretKey: ""
+  seedAdminPassword: ""
+
+podSecurityContext: {}
+
+securityContext:
+  runAsNonRoot: true
+  # El Dockerfile hace "USER app" (nombre, no UID numerico). Kubernetes no
+  # puede resolver ese nombre sin ejecutar el contenedor, asi que
+  # runAsNonRoot por si solo no basta — hay que fijar el UID numerico que
+  # ese usuario tiene DENTRO de la imagen (confirmado con `docker run ... id`).
+  runAsUser: 100
+  runAsGroup: 101
+  readOnlyRootFilesystem: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: ["ALL"]
+
+service:
+  type: ClusterIP
+  port: 3000
+
+resources:
+  requests:
+    cpu: 75m
+    memory: 96Mi
+  limits:
+    cpu: 250m
+    memory: 192Mi
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 3
+  periodSeconds: 5
+  failureThreshold: 3
+
+startupProbe:
+  httpGet:
+    path: /health
+    port: http
+  periodSeconds: 5
+  failureThreshold: 6
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70
+
+# Minimo de pods vivos garantizado durante una disrupcion VOLUNTARIA
+# (kubectl drain, upgrade de nodo, cluster-autoscaler) — no aplica a
+# rollouts normales de Deployment, que no pasan por la Eviction API.
+# minAvailable: 1 con replicaCount: 1 (ambiente dev) bloquea CUALQUIER
+# eviccion mientras solo haya 1 replica viva; con 2+ (prod, o cuando el
+# HPA escala) ya permite drenar nodos uno a la vez sin dejar el servicio
+# en cero.
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+volumes: []
+volumeMounts: []
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

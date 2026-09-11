@@ -1,0 +1,106 @@
+# Overrides para ambiente de desarrollo.
+# Uso: helm install sa-p5 . --create-namespace -n sa-p5 -f values-dev.yaml
+
+authz-service:
+  replicaCount: 1
+  autoscaling:
+    enabled: false
+  image:
+    tag: "runtime"
+  config:
+    logLevel: "debug"
+  resources:
+    requests:
+      cpu: 25m
+      memory: 32Mi
+    limits:
+      cpu: 100m
+      memory: 64Mi
+
+api-gateway:
+  replicaCount: 1
+  autoscaling:
+    enabled: false
+  image:
+    tag: "runtime"
+  config:
+    logLevel: "debug"
+  resources:
+    requests:
+      cpu: 50m
+      memory: 48Mi
+    limits:
+      cpu: 150m
+      memory: 96Mi
+
+auth-service:
+  replicaCount: 1
+  autoscaling:
+    enabled: false
+  image:
+    tag: "runtime"
+  config:
+    logLevel: "debug"
+    cookieSecure: false
+  resources:
+    requests:
+      cpu: 40m
+      memory: 64Mi
+    limits:
+      cpu: 150m
+      memory: 128Mi
+
+productos-service:
+  replicaCount: 1
+  autoscaling:
+    enabled: false
+  image:
+    tag: "runtime"
+  config:
+    logLevel: "debug"
+  resources:
+    requests:
+      cpu: 40m
+      memory: 64Mi
+    limits:
+      cpu: 150m
+      memory: 128Mi
+
+reportes-service:
+  replicaCount: 1
+  autoscaling:
+    enabled: false
+  image:
+    tag: "runtime"
+  config:
+    logLevel: "debug"
+  resources:
+    requests:
+      cpu: 40m
+      memory: 64Mi
+    limits:
+      cpu: 150m
+      memory: 128Mi
+
+pedidos-service:
+  replicaCount: 1
+  autoscaling:
+    enabled: false
+  image:
+    tag: "runtime"
+  config:
+    logLevel: "debug"
+  resources:
+    requests:
+      cpu: 40m
+      memory: 64Mi
+    limits:
+      cpu: 150m
+      memory: 128Mi
+
+# Los 6 subcharts ya tienen su bloque de overrides arriba.
+
+# postgresql y rabbitmq (dependencias de Bitnami) se configuran a fondo en
+# el paso de "Persistencia" / "Comunicacion asincrona" — sus credenciales
+# y las de auth-service/sharedSecrets NO van en este archivo, van en
+# values.example.yaml (o su copia real, no versionada).

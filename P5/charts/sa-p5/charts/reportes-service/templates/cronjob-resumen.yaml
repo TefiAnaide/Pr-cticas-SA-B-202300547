@@ -1,0 +1,55 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "reportes-service.fullname" . }}-cronjob-resumen
+  labels:
+    {{- include "reportes-service.labels" . | nindent 4 }}
+    app.kubernetes.io/component: cronjob-resumen
+spec:
+  schedule: {{ .Values.cronjobs.resumen.schedule | quote }}
+  timeZone: {{ .Values.cronjobs.resumen.timeZone | quote }}
+  concurrencyPolicy: {{ .Values.cronjobs.resumen.concurrencyPolicy }}
+  successfulJobsHistoryLimit: {{ .Values.cronjobs.resumen.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.cronjobs.resumen.failedJobsHistoryLimit }}
+  jobTemplate:
+    spec:
+      backoffLimit: {{ .Values.cronjobs.resumen.backoffLimit }}
+      template:
+        metadata:
+          labels:
+            {{- include "reportes-service.selectorLabels" . | nindent 12 }}
+            app.kubernetes.io/component: cronjob-resumen
+        spec:
+          restartPolicy: OnFailure
+          serviceAccountName: {{ include "reportes-service.fullname" . }}-cronjob-resumen
+          {{- with .Values.podSecurityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          containers:
+            - name: cronjob-resumen
+              {{- with .Values.securityContext }}
+              securityContext:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
+              image: "{{ .Values.image.repository }}:{{ required "reportes-service: falta definir image.tag" .Values.image.tag }}"
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              command: ["python", "-m", "src.scripts.cronjob_resumen"]
+              envFrom:
+                - configMapRef:
+                    name: {{ include "reportes-service.fullname" . }}-config
+              env:
+                - name: DB_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres
+                      key: postgres-password
+                - name: RABBITMQ_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: rabbitmq
+                      key: rabbitmq-password
+              {{- with .Values.cronjobs.resumen.resources }}
+              resources:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}

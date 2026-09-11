@@ -21,6 +21,7 @@ Gateway, usando al menos 2 lenguajes de programacion y GraphQL en al menos
 - [Autenticacion entre servicios](#autenticacion-entre-servicios)
 - [Flujo de una compra (pedidos-service)](#flujo-de-una-compra-pedidos-service)
 - [Como levantar todo](#como-levantar-todo)
+- [Imagenes Docker multi-stage (Practica 5)](#imagenes-docker-multi-stage-practica-5)
 - [Documentacion de contratos (Swagger)](#documentacion-de-contratos-swagger)
 - [Variables de entorno](#variables-de-entorno)
 - [Documentacion de endpoints](#documentacion-de-endpoints)
@@ -137,6 +138,75 @@ docker compose up -d --build
 Esto levanta 10 contenedores: 4 Postgres, `authz-service`, `auth-service`,
 `productos-service`, `reportes-service`, `pedidos-service` y `api-gateway`.
 Todo el trafico externo pasa por el gateway en `http://localhost:8080`.
+
+## Imagenes Docker multi-stage (Practica 5)
+
+Para la Practica 5 (orquestacion en Kubernetes con Helm) cada uno de los 6
+microservicios (`api-gateway`, `auth-service`, `authz-service`,
+`pedidos-service`, `productos-service`, `reportes-service`) tiene un
+`Dockerfile` **multi-stage** con tres etapas:
+
+1. **`dev`** — imagen "gorda" con todas las dependencias (incluidas las de
+   desarrollo) y hot-reload (`nodemon` en los 3 servicios Node, `uvicorn
+   --reload` en los 3 servicios Python). Es la que usa `docker-compose.yml`
+   (`build.target: dev`) para seguir con el flujo de trabajo local de la
+   Practica 4: codigo montado como volumen, cambios reflejados al vuelo.
+2. **`deps` / `builder`** — etapa intermedia, invisible en el resultado
+   final, que solo instala las dependencias de **produccion**:
+   - Node: `npm ci --omit=dev` (requiere `package-lock.json`; se genero uno
+     para `api-gateway` y `authz-service`, que no lo tenian, y se actualizo
+     el de `auth-service`, que estaba desincronizado con su `package.json`).
+   - Python: `pip install --no-cache-dir --prefix=/install -r requirements.txt`,
+     que aisla los paquetes en `/install` en vez de mezclarlos con el Python
+     del sistema del builder.
+3. **`runtime`** — la imagen final y **el target por defecto** de
+   `docker build` (al ser la ultima etapa del archivo, no hace falta pasar
+   `--target`). Es la que se usa para el chart de Helm:
+   - Base minima sin cambios (`node:22-alpine` / `python:3.12-slim`), pero
+     sin herramientas de build, cache de `pip`/`npm`, ni `devDependencies`
+     (se movio `nodemon` a `devDependencies` en los tres `package.json` de
+     Node para que `--omit=dev` lo excluya de verdad).
+   - Corre como usuario **no root** (`app`), creado explicitamente en la
+     imagen — requisito del `securityContext: runAsNonRoot` de la practica.
+   - Sin `--reload` / `nodemon`: el proceso arranca directo con
+     `node src/server.js` o `uvicorn ... ` (sin reload), que es lo correcto
+     para un contenedor inmutable en produccion.
+
+### Como construir cada variante
+
+```bash
+# Imagen de desarrollo (equivalente a lo que arma docker-compose):
+docker build --target dev -t <servicio>:dev ./<servicio>
+
+# Imagen de produccion (para Kubernetes/Helm) — target por defecto:
+docker build -t <servicio>:runtime ./<servicio>
+```
+
+`docker compose up -d --build` sigue funcionando igual que en la Practica 4
+(usa el target `dev` de cada Dockerfile automaticamente).
+
+### Comparativa de tamaño (antes vs. despues del multi-stage)
+
+"Antes" es la imagen single-stage original de la Practica 4 (`FROM ... ; npm
+install / pip install ; COPY . .`, todo en una sola capa). "Despues" es la
+etapa `runtime` del Dockerfile multi-stage, medida con `docker images`.
+
+| Microservicio | Antes (single-stage) | Despues (`runtime`) | Reduccion |
+|---|---:|---:|---:|
+| `api-gateway` | 213 MB | 183 MB | -30 MB (-14.1%) |
+| `auth-service` | 198 MB | 186 MB | -12 MB (-6.1%) |
+| `authz-service` | 178 MB | 167 MB | -11 MB (-6.2%) |
+| `pedidos-service` | 176 MB | 168 MB | -8 MB (-4.5%) |
+| `productos-service` | 181 MB | 173 MB | -8 MB (-4.4%) |
+| `reportes-service` | 181 MB | 173 MB | -8 MB (-4.4%) |
+
+La reduccion es mas notoria en los servicios Node (sobre todo
+`api-gateway`, que ya no arrastra `nodemon` ni el resto de
+`devDependencies`) que en los de Python: `psycopg2-binary` y
+`strawberry-graphql[fastapi]` ya se instalaban desde wheels precompilados
+en la imagen single-stage (no requerian `gcc`/`build-essential`), asi que
+la ganancia ahi viene solo de descartar el cache de `pip` y las carpetas
+temporales de la instalacion, no de eliminar un toolchain de compilacion.
 
 ## Documentacion de contratos (Swagger)
 

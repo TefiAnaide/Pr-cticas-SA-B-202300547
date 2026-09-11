@@ -1,0 +1,27 @@
+dependencies:
+- name: api-gateway
+  repository: ""
+  version: 0.1.0
+- name: auth-service
+  repository: ""
+  version: 0.1.0
+- name: authz-service
+  repository: ""
+  version: 0.1.0
+- name: pedidos-service
+  repository: ""
+  version: 0.1.0
+- name: productos-service
+  repository: ""
+  version: 0.1.0
+- name: reportes-service
+  repository: ""
+  version: 0.1.0
+- name: rabbitmq
+  repository: https://charts.bitnami.com/bitnami
+  version: 16.0.14
+- name: postgresql
+  repository: https://charts.bitnami.com/bitnami
+  version: 18.8.13
+digest: sha256:779fe2b1ce1508de3008a8a2b0592c49cdda02dbb1de28c390e4daa5ac2ffb0f
+generated: "2026-08-28T08:47:40.496382638-06:00"

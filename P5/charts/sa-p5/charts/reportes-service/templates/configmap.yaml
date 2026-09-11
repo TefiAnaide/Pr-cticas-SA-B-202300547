@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "reportes-service.fullname" . }}-config
+  labels:
+    {{- include "reportes-service.labels" . | nindent 4 }}
+data:
+  PORT: {{ .Values.service.port | quote }}
+  LOG_LEVEL: {{ .Values.config.logLevel | default "info" | quote }}
+  DB_HOST: {{ required "reportes-service: falta config.dbHost" .Values.config.dbHost | quote }}
+  DB_PORT: {{ .Values.config.dbPort | default 5432 | quote }}
+  DB_USER: {{ .Values.config.dbUser | default "postgres" | quote }}
+  DB_NAME: {{ required "reportes-service: falta config.dbName" .Values.config.dbName | quote }}
+  AUTHZ_SERVICE_URL: {{ required "reportes-service: falta config.authzServiceUrl" .Values.config.authzServiceUrl | quote }}
+  AUTHZ_MAX_RETRIES: {{ .Values.config.authzMaxRetries | default 3 | quote }}
+  AUTHZ_RETRY_BACKOFF_MS: {{ .Values.config.authzRetryBackoffMs | default 300 | quote }}
+  PRODUCTOS_SERVICE_URL: {{ required "reportes-service: falta config.productosServiceUrl" .Values.config.productosServiceUrl | quote }}
+  RABBITMQ_HOST: {{ required "reportes-service: falta config.rabbitmqHost" .Values.config.rabbitmqHost | quote }}
+  RABBITMQ_PORT: {{ .Values.config.rabbitmqPort | default 5672 | quote }}
+  RABBITMQ_USER: {{ required "reportes-service: falta config.rabbitmqUser" .Values.config.rabbitmqUser | quote }}
+  RABBITMQ_QUEUE: {{ required "reportes-service: falta config.rabbitmqQueue" .Values.config.rabbitmqQueue | quote }}
+  STUDENT_CARNE: {{ required "reportes-service: falta config.studentCarne" .Values.config.studentCarne | quote }}

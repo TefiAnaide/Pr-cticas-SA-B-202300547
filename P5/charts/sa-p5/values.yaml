@@ -1,0 +1,211 @@
+# Valores base del chart padre sa-p5.
+# Los valores especificos de cada microservicio viven en el values.yaml de
+# su propio subchart (charts/<servicio>/values.yaml); aqui solo van cosas
+# que le pertenecen al padre (el Ingress) y los overrides que homologan el
+# nombre de cada subchart.
+
+# Nombres deterministas para cada subchart (no dependen del nombre del
+# release de Helm) — asi el Ingress de abajo puede apuntar a un nombre fijo.
+api-gateway:
+  fullnameOverride: "api-gateway"
+auth-service:
+  fullnameOverride: "auth-service"
+authz-service:
+  fullnameOverride: "authz-service"
+pedidos-service:
+  fullnameOverride: "pedidos-service"
+productos-service:
+  fullnameOverride: "productos-service"
+reportes-service:
+  fullnameOverride: "reportes-service"
+
+# Unico punto de entrada de toda la plataforma: Ingress -> Service del
+# api-gateway. Ningun otro microservicio, la base de datos ni el broker se
+# exponen aqui.
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations: {}
+  hosts:
+    - host: sa-p5.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+# Puerto del Service del api-gateway al que apunta el Ingress.
+service:
+  port: 8080
+
+# Aislamiento de trafico lateral: deny-all por defecto en el namespace +
+# una regla de allow explicita por cada arista real del grafo de
+# comunicacion (ver templates/networkpolicy-*.yaml). Requiere un CNI que
+# aplique NetworkPolicy (ej. Calico) — el CNI "bridge" por defecto de
+# minikube las acepta sin error pero NO las hace cumplir.
+networkPolicy:
+  enabled: true
+
+# Techo de consumo del namespace completo. Dimensionado con margen sobre
+# el uso real medido en minikube con el ambiente dev (~635m/1580m cpu
+# req/lim, ~816Mi/1440Mi mem req/lim entre los 9 pods de aplicacion +
+# postgres + rabbitmq) — deja espacio para escalar manualmente durante
+# pruebas, pero sigue siendo lo bastante ajustado para poder demostrar un
+# rechazo real por cuota excedida. values-prod.yaml lo sube porque ahi el
+# HPA puede llegar hasta 5 replicas por servicio.
+resourceQuota:
+  enabled: true
+  hard:
+    requests.cpu: "1500m"
+    requests.memory: "1536Mi"
+    limits.cpu: "3000m"
+    limits.memory: "3Gi"
+    pods: "30"
+    persistentvolumeclaims: "5"
+
+# Cinturon de seguridad a nivel de contenedor: valores por defecto para
+# cualquier container que "olvide" declarar requests/limits (hoy ninguno
+# lo olvida, todos los declaran explicitamente) y un tope min/max que
+# ningun container — ni los de los 6 subcharts ni los de postgresql/
+# rabbitmq de Bitnami — puede cruzar por accidente ni en dev ni en prod.
+limitRange:
+  enabled: true
+  default:
+    cpu: "200m"
+    memory: "256Mi"
+  defaultRequest:
+    cpu: "50m"
+    memory: "64Mi"
+  max:
+    cpu: "500m"
+    memory: "512Mi"
+  min:
+    cpu: "10m"
+    memory: "16Mi"
+
+# Dependencias de Bitnami (ver Chart.yaml), con nombre de Service predecible
+# (mismo patron que los 6 subcharts). La comunicacion asincrona (rabbitmq)
+# se configura a fondo en un paso posterior.
+postgresql:
+  enabled: true
+  fullnameOverride: "postgres"
+  architecture: standalone
+  # Los microservicios se conectan como "postgres" (superusuario), igual
+  # que en la Practica 4 — no se crea un usuario de aplicacion aparte.
+  auth:
+    postgresPassword: "" # obligatorio via values.example.yaml (o su copia real)
+  # Una sola instancia de Postgres, con las 4 bases de datos de la
+  # Practica 4 adentro (database-per-service logico, no fisico). Cada
+  # script crea su propia base si no existe y despues las tablas del
+  # dominio (mismo SQL que P5/database/*_init.sql).
+  primary:
+    # El chart de Bitnami trae su propia NetworkPolicy por defecto (permisiva:
+    # allowExternal=true, o sea que en la practica no filtra nada). La
+    # desactivamos para que la unica fuente de verdad sea la NetworkPolicy
+    # "postgres" del chart padre (templates/networkpolicy-services.yaml),
+    # que ademas comparte nombre con esta y se pisarian entre si.
+    networkPolicy:
+      enabled: false
+    persistence:
+      size: 1Gi
+    initdb:
+      scripts:
+        01-auth.sql: |
+          SELECT 'CREATE DATABASE aut'
+          WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'aut')\gexec
+
+          \c aut
+
+          create table if not EXISTS usuarios (
+              id UUID PRIMARY KEY,
+              nombre TEXT NOT NULL,
+              correo_electronico TEXT NOT NULL,
+              correo_hash TEXT NOT NULL UNIQUE,
+              contrasena TEXT NOT NULL,
+              fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              rol VARCHAR(50) NOT NULL
+                  CHECK (
+                      rol IN (
+                          'Admin',
+                          'Cliente'
+                      )
+                  )
+          );
+        02-productos.sql: |
+          SELECT 'CREATE DATABASE productos_db'
+          WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'productos_db')\gexec
+
+          \c productos_db
+
+          CREATE TABLE IF NOT EXISTS productos (
+              id UUID PRIMARY KEY,
+              nombre TEXT NOT NULL,
+              descripcion TEXT,
+              precio NUMERIC(12, 2) NOT NULL CHECK (precio > 0),
+              stock INTEGER NOT NULL CHECK (stock >= 0),
+              categoria VARCHAR(80) NOT NULL,
+              fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          );
+        03-reportes.sql: |
+          SELECT 'CREATE DATABASE reportes_db'
+          WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'reportes_db')\gexec
+
+          \c reportes_db
+
+          CREATE TABLE IF NOT EXISTS reportes (
+              id UUID PRIMARY KEY,
+              tipo VARCHAR(50) NOT NULL,
+              resultado JSONB NOT NULL,
+              fecha_generacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          );
+
+          -- Cronjob 1: un registro por ejecucion (fecha/hora GMT-6 + carne).
+          CREATE TABLE IF NOT EXISTS cronjob_heartbeats (
+              id SERIAL PRIMARY KEY,
+              carne VARCHAR(20) NOT NULL,
+              fecha_hora TIMESTAMP NOT NULL DEFAULT now()
+          );
+
+          -- Resumenes que llegan de forma asincrona via RabbitMQ (Cronjob 2
+          -- publica, el consumidor de reportes-service los inserta aqui).
+          CREATE TABLE IF NOT EXISTS resumenes_cronjob (
+              id UUID PRIMARY KEY,
+              resumen JSONB NOT NULL,
+              fecha_generacion TIMESTAMP NOT NULL DEFAULT now()
+          );
+        04-pedidos.sql: |
+          SELECT 'CREATE DATABASE pedidos_db'
+          WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'pedidos_db')\gexec
+
+          \c pedidos_db
+
+          CREATE TABLE IF NOT EXISTS pedidos (
+              id UUID PRIMARY KEY,
+              usuario_id UUID NOT NULL,
+              items JSONB NOT NULL,
+              total NUMERIC(12, 2) NOT NULL CHECK (total >= 0),
+              estado VARCHAR(20) NOT NULL DEFAULT 'CONFIRMADO',
+              fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          );
+rabbitmq:
+  enabled: true
+  fullnameOverride: "rabbitmq"
+  # Mismo caso que postgresql.primary.networkPolicy: desactivamos la
+  # NetworkPolicy por defecto del chart (tambien permisiva y con el mismo
+  # nombre "rabbitmq") a favor de la del chart padre.
+  networkPolicy:
+    enabled: false
+  # El tag fijo que trae el chart por defecto (bitnami/rabbitmq:4.1.3-debian-12-r1)
+  # ya no existe en el repo publico de Bitnami (Broadcom lo movio al archivo
+  # "legacy" tras su cambio de politica de distribucion en 2025). Mismo tag,
+  # mismo digest, solo cambia el repositorio.
+  image:
+    registry: docker.io
+    repository: bitnamilegacy/rabbitmq
+    tag: 4.1.3-debian-12-r1
+
+# Secreto compartido entre servicios (ver templates/shared-secrets.yaml).
+# Vacio aqui a proposito: sin valor real, "helm template/install" falla
+# con un mensaje claro en vez de crear un Secret con JWT_SECRET="". El
+# valor ficticio de ejemplo esta en values.example.yaml.
+sharedSecrets:
+  jwtSecret: ""

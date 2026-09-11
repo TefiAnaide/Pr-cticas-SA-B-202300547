@@ -1,0 +1,21 @@
+{{/*
+reportes-service tiene 4 workloads compartiendo las mismas selectorLabels
+(server, consumer, 2 cronjobs) — sin acotar por "component" este PDB
+contaria pods del consumidor y de los Jobs de los cronjobs junto con los
+del servidor HTTP, lo cual no tiene sentido (son replicas de cosas
+distintas). Se acota explicitamente al Deployment del servidor.
+*/}}
+{{- if .Values.podDisruptionBudget.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "reportes-service.fullname" . }}-server
+  labels:
+    {{- include "reportes-service.labels" . | nindent 4 }}
+spec:
+  minAvailable: {{ .Values.podDisruptionBudget.minAvailable }}
+  selector:
+    matchLabels:
+      {{- include "reportes-service.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: server
+{{- end }}

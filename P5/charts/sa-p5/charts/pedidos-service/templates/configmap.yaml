@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "pedidos-service.fullname" . }}-config
+  labels:
+    {{- include "pedidos-service.labels" . | nindent 4 }}
+data:
+  PORT: {{ .Values.service.port | quote }}
+  LOG_LEVEL: {{ .Values.config.logLevel | default "info" | quote }}
+  DB_HOST: {{ required "pedidos-service: falta config.dbHost" .Values.config.dbHost | quote }}
+  DB_PORT: {{ .Values.config.dbPort | default 5432 | quote }}
+  DB_USER: {{ .Values.config.dbUser | default "postgres" | quote }}
+  DB_NAME: {{ required "pedidos-service: falta config.dbName" .Values.config.dbName | quote }}
+  AUTHZ_SERVICE_URL: {{ required "pedidos-service: falta config.authzServiceUrl" .Values.config.authzServiceUrl | quote }}
+  AUTHZ_MAX_RETRIES: {{ .Values.config.authzMaxRetries | default 3 | quote }}
+  AUTHZ_RETRY_BACKOFF_MS: {{ .Values.config.authzRetryBackoffMs | default 300 | quote }}
+  PRODUCTOS_SERVICE_URL: {{ required "pedidos-service: falta config.productosServiceUrl" .Values.config.productosServiceUrl | quote }}

@@ -1,0 +1,37 @@
+# Plantilla de credenciales FICTICIAS. Este archivo SI se versiona (a
+# diferencia de un archivo real de secretos); documenta que claves esperan
+# un valor sensible sin exponer las credenciales reales.
+#
+# Uso: copiar a un archivo que NO se versione (ej. values-secrets.local.yaml,
+# agregado a .gitignore), rellenar con los valores reales, y pasarlo con
+# -f al hacer helm install/upgrade.
+#
+# helm install sa-p5 . -n sa-p5 -f values-dev.yaml -f values-secrets.local.yaml
+
+# Contrasena del superusuario "postgres" — todos los microservicios se
+# conectan con ese mismo usuario (igual que en la Practica 4), asi que
+# solo hace falta esta clave (no se crea un usuario de aplicacion aparte
+# por ahora).
+postgresql:
+  auth:
+    postgresPassword: "changeme-postgres-admin-password"
+
+rabbitmq:
+  auth:
+    username: "sa_p5"
+    password: "changeme-rabbitmq-password"
+
+# JWT_SECRET: compartido entre auth/productos/reportes/pedidos-service
+# para firmar y verificar el mismo token (ver P5/README.md, seccion
+# "Autenticacion entre servicios"). Ver charts/sa-p5/templates/shared-secrets.yaml.
+sharedSecrets:
+  jwtSecret: "changeme-jwt-secret-debe-ser-igual-en-los-4-servicios"
+
+# Secretos propios de auth-service (ver charts/auth-service/values.yaml).
+auth-service:
+  secrets:
+    # AES-256-CBC exige una clave de EXACTAMENTE 32 bytes en hex (64
+    # caracteres) — generar la real con `openssl rand -hex 32`.
+    aesSecretKey: "b01768d6a8977708f4dcd1c84796292180ad917bb3b77672b49f955cb31f7966"
+    hmacSecretKey: "changeme-hmac-secret-key"
+    seedAdminPassword: "changeme-seed-admin-password"

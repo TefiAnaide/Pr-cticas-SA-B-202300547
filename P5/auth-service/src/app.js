@@ -16,6 +16,10 @@ const app = express();
 app.use(express.json());
 app.use(cookieParser());
 
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'ok', service: 'auth-service' });
+});
+
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(openapiSpec));
 
 app.use('/api/auth', authRoutes);

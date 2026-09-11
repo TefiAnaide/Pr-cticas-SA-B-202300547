@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --test tests/*.test.js"
   },
   "author": "",
   "license": "ISC",
@@ -21,9 +21,12 @@
     "express-validator": "^7.3.2",
     "js-yaml": "^4.1.0",
     "jsonwebtoken": "^9.0.3",
-    "nodemon": "^3.1.14",
     "pg": "^8.22.0",
     "swagger-ui-express": "^5.0.1",
     "uuid": "^14.0.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14",
+    "supertest": "^7.2.2"
   }
 }

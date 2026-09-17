@@ -1,0 +1,203 @@
+name: CI/CD - Practica 8 (GitOps + supply chain)
+
+# Disparo por TAG semantico (vX.Y.Z): cada release real de la plataforma es
+# un tag de Git, nunca un push suelto a main — asi el tag de la imagen
+# Docker se deriva directo del tag de Git (Practica 8, seccion 3.2:
+# "la etiqueta de la imagen debera derivarse de un tag o release de Git.
+# Queda prohibido el uso de latest"). workflow_dispatch queda para
+# demostraciones manuales, con la version como input.
+on:
+  push:
+    tags: ["v*.*.*"]
+    paths:
+      - "P5/**"
+      - ".github/workflows/ci-cd-p8.yml"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version semantica a publicar (ej. v0.2.0)"
+        required: true
+
+permissions:
+  contents: read
+
+env:
+  ALL_SERVICES: api-gateway auth-service authz-service pedidos-service productos-service reportes-service
+  GITOPS_REPO: TefiAnaide/Practicas-SA-GitOps
+
+jobs:
+  # ---------- Version efectiva de esta corrida ----------
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+    steps:
+      - id: v
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "version=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+          fi
+
+  # ---------- Helm lint del chart (repo GitOps) integrado al pipeline ----------
+  helm-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout del repo GitOps (donde vive el chart)
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.GITOPS_REPO }}
+          path: gitops
+
+      - uses: azure/setup-helm@v4
+        with:
+          version: "v3.16.1"
+
+      - name: Registrar el repo de Helm de Bitnami
+        run: helm repo add bitnami https://charts.bitnami.com/bitnami
+
+      - name: Resolver dependencias del chart
+        run: helm dependency build gitops/chart
+
+      - name: helm lint
+        run: helm lint --with-subcharts gitops/chart -f gitops/chart/values-dev.yaml -f gitops/chart/values-images.yaml
+
+  # ---------- Build + Trivy (bloqueo por CVE critica) + SBOM + firma + push ----------
+  build-scan-sign-push:
+    needs: version
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write # requerido por cosign para firma keyless (OIDC de GitHub)
+    strategy:
+      matrix:
+        service: [api-gateway, auth-service, authz-service, pedidos-service, productos-service, reportes-service]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Definir nombre de imagen (en minuscula, requerido por GHCR)
+        run: echo "IMAGE=ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')/p8-${{ matrix.service }}" >> "$GITHUB_ENV"
+
+      - name: Build de la imagen (sin publicar todavia)
+        uses: docker/build-push-action@v6
+        with:
+          context: P5/${{ matrix.service }}
+          target: runtime
+          push: false
+          load: true
+          tags: ${{ env.IMAGE }}:${{ needs.version.outputs.version }}
+          cache-from: type=gha,scope=p8-${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=p8-${{ matrix.service }}
+
+      - name: Trivy — bloquea el pipeline si hay CVE CRITICAL
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: "${{ env.IMAGE }}:${{ needs.version.outputs.version }}"
+          format: "table"
+          severity: "CRITICAL"
+          exit-code: "1"
+          ignore-unfixed: true
+
+      - name: Generar SBOM (SPDX)
+        uses: anchore/sbom-action@v0
+        with:
+          image: "${{ env.IMAGE }}:${{ needs.version.outputs.version }}"
+          format: spdx-json
+          output-file: "sbom-${{ matrix.service }}.spdx.json"
+
+      - name: Publicar SBOM como artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-${{ matrix.service }}
+          path: "sbom-${{ matrix.service }}.spdx.json"
+
+      - name: Autenticarse en GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push de la imagen (solo tras pasar Trivy)
+        id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: P5/${{ matrix.service }}
+          target: runtime
+          push: true
+          tags: ${{ env.IMAGE }}:${{ needs.version.outputs.version }}
+          cache-from: type=gha,scope=p8-${{ matrix.service }}
+
+      - uses: sigstore/cosign-installer@v3
+
+      - name: Firmar la imagen (Cosign keyless, identidad = este workflow de GitHub Actions)
+        run: cosign sign --yes "${IMAGE}@${DIGEST}"
+        env:
+          IMAGE: ${{ env.IMAGE }}
+          DIGEST: ${{ steps.push.outputs.digest }}
+
+      - name: Verificar la firma (evidencia inmediata de que quedo bien firmada)
+        run: |
+          cosign verify "${IMAGE}@${DIGEST}" \
+            --certificate-identity-regexp "https://github.com/${{ github.repository }}/.*" \
+            --certificate-oidc-issuer "https://token.actions.githubusercontent.com"
+        env:
+          IMAGE: ${{ env.IMAGE }}
+          DIGEST: ${{ steps.push.outputs.digest }}
+
+  # ---------- Actualizar el tag de imagen en el repo GitOps via PR ----------
+  # Unico punto de contacto con el repositorio GitOps: nunca un push directo
+  # a main, siempre un Pull Request — ArgoCD sincroniza el cluster solo
+  # cuando alguien (no este workflow) lo mergea.
+  open-gitops-pr:
+    needs: [version, build-scan-sign-push]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout del repo GitOps
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.GITOPS_REPO }}
+          token: ${{ secrets.GITOPS_PAT }}
+          path: gitops
+
+      - name: Definir prefijo de imagen (en minuscula)
+        run: echo "IMAGE_PREFIX=ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
+
+      - name: Actualizar los tags en values-images.yaml
+        run: |
+          set -e
+          VERSION="${{ needs.version.outputs.version }}"
+          for svc in $ALL_SERVICES; do
+            python3 - "$svc" "$VERSION" <<'PYEOF'
+          import re, sys
+          svc, version = sys.argv[1], sys.argv[2]
+          path = "gitops/chart/values-images.yaml"
+          with open(path) as f:
+              content = f.read()
+          pattern = rf'({re.escape(svc)}:\n  image:\n    repository: [^\n]+\n    tag: ")[^"]+(")'
+          new_content = re.sub(pattern, rf'\g<1>{version}\g<2>', content)
+          assert new_content != content, f"no se actualizo el tag de {svc}"
+          with open(path, "w") as f:
+              f.write(new_content)
+          PYEOF
+          done
+          cat gitops/chart/values-images.yaml
+
+      - name: Abrir Pull Request con la nueva version
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITOPS_PAT }}
+          path: gitops
+          branch: "release/${{ needs.version.outputs.version }}"
+          commit-message: "release: actualizar imagenes a ${{ needs.version.outputs.version }}"
+          title: "Release ${{ needs.version.outputs.version }}"
+          body: |
+            Actualiza el tag de las 6 imagenes a `${{ needs.version.outputs.version }}`.
+
+            Generado automaticamente por el pipeline de CI/CD (Practica 8) tras
+            pasar build, test, escaneo de Trivy, SBOM y firma con Cosign.
+            Commit origen: ${{ github.sha }}

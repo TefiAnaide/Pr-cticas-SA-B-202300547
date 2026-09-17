@@ -112,86 +112,13 @@ jobs:
           cache-from: type=gha,scope=${{ matrix.service }}
           cache-to: type=gha,mode=max,scope=${{ matrix.service }}
 
-  # ---------- Etapa 3: Despliegue automatico en k8s local (kind) ----------
-  deploy-k8s:
-    needs: build-and-push
-    if: github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: read
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Definir prefijo de imagen (en minuscula)
-        run: echo "IMAGE_PREFIX=ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
-
-      - name: Crear cluster de Kubernetes local (kind)
-        uses: helm/kind-action@v1.10.0
-        with:
-          cluster_name: sa-p5-ci
-
-      - uses: azure/setup-helm@v4
-        with:
-          version: "v3.16.1"
-
-      - name: Autenticarse en GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Descargar imagenes y cargarlas en el cluster kind
-        run: |
-          set -e
-          for svc in $ALL_SERVICES; do
-            docker pull "${IMAGE_PREFIX}/p5-${svc}:${{ github.sha }}"
-            kind load docker-image "${IMAGE_PREFIX}/p5-${svc}:${{ github.sha }}" --name sa-p5-ci
-          done
-
-      - name: Registrar el repo de Helm de Bitnami
-        run: helm repo add bitnami https://charts.bitnami.com/bitnami
-
-      - name: Resolver dependencias del chart (postgresql / rabbitmq)
-        run: helm dependency build P5/charts/sa-p5
-
-      - name: Generar secretos efimeros para el cluster de CI
-        run: echo "CI_AES_KEY=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
-
-      - name: Deploy con Helm
-        run: |
-          helm upgrade --install sa-p5 P5/charts/sa-p5 \
-            -n sa-p5 --create-namespace \
-            -f P5/charts/sa-p5/values-dev.yaml \
-            --set postgresql.auth.postgresPassword=ci-postgres-password \
-            --set rabbitmq.auth.username=sa_p5 \
-            --set rabbitmq.auth.password=ci-rabbitmq-password \
-            --set sharedSecrets.jwtSecret=ci-jwt-secret-para-pruebas \
-            --set auth-service.secrets.aesSecretKey="${CI_AES_KEY}" \
-            --set auth-service.secrets.hmacSecretKey=ci-hmac-secret \
-            --set auth-service.secrets.seedAdminPassword=ci-seed-admin-password \
-            --set api-gateway.image.repository=${IMAGE_PREFIX}/p5-api-gateway \
-            --set api-gateway.image.tag=${{ github.sha }} \
-            --set auth-service.image.repository=${IMAGE_PREFIX}/p5-auth-service \
-            --set auth-service.image.tag=${{ github.sha }} \
-            --set authz-service.image.repository=${IMAGE_PREFIX}/p5-authz-service \
-            --set authz-service.image.tag=${{ github.sha }} \
-            --set pedidos-service.image.repository=${IMAGE_PREFIX}/p5-pedidos-service \
-            --set pedidos-service.image.tag=${{ github.sha }} \
-            --set productos-service.image.repository=${IMAGE_PREFIX}/p5-productos-service \
-            --set productos-service.image.tag=${{ github.sha }} \
-            --set reportes-service.image.repository=${IMAGE_PREFIX}/p5-reportes-service \
-            --set reportes-service.image.tag=${{ github.sha }} \
-            --wait --timeout 8m
-
-      - name: Verificar pods y servicios desplegados
-        run: |
-          kubectl get pods -n sa-p5 -o wide
-          kubectl get svc -n sa-p5
-
-      - name: Smoke test del api-gateway
-        run: |
-          kubectl port-forward -n sa-p5 svc/api-gateway 8080:8080 &
-          sleep 5
-          curl -sf http://localhost:8080/health
+  # NOTA (Practica 8): este workflow ya NO despliega al cluster. El job
+  # "deploy-k8s" que existia aqui (que instalaba el chart de Helm
+  # directamente contra un kind efimero) se quito porque la Practica 8
+  # prohibe explicitamente que cualquier workflow del repo aplique
+  # manifiestos o cambie imagenes contra un cluster real de forma directa
+  # — el despliegue ahora es exclusivamente via GitOps (ver
+  # .github/workflows/ci-cd-p8.yml y el repo Practicas-SA-GitOps). La
+  # Practica 7 ya fue evaluada con el job anterior; esto no cambia esa
+  # nota, solo evita que el archivo siga contando como despliegue directo
+  # en verificaciones de practicas posteriores.

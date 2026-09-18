@@ -1,0 +1,13 @@
+sequenceDiagram
+  participant BUS as Event Bus
+  participant TXN as Transaction Service
+  participant CORE as Sistema Core Bancario
+  participant LOG as Logging Service
+
+  BUS->>TXN: BatchFullyApproved(batchId)
+  TXN->>TXN: recuperar transacciones del batch
+  TXN->>CORE: POST /compensacion (transacciones)
+  CORE-->>TXN: 202 Accepted (referenceId)
+  TXN->>TXN: guardar CoreSubmission(referenceId, status=SENT)
+  TXN->>BUS: publish TransactionsSubmitted(batchId)
+  TXN->>LOG: log evento (traceId, batchId, status)

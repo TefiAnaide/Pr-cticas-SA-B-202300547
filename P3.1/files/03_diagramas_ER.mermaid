@@ -1,0 +1,146 @@
+erDiagram
+  %% ==================== AUTH SERVICE ====================
+  %% Autenticación (P2): login, JWT/OAuth 12h, AES sobre datos sensibles.
+  USER ||--o{ USER_ROLE : tiene
+  ROLE ||--o{ USER_ROLE : asignado
+  USER ||--o{ TOKEN : genera
+
+  USER {
+    uuid id PK
+    string username
+    string email "cifrado AES-256 (P2)"
+    string employeeId
+    boolean active
+  }
+  ROLE {
+    uuid id PK
+    string name "MAKER, CHECKER, AUTHORIZER, ADMIN"
+  }
+  TOKEN {
+    uuid id PK
+    uuid userId FK
+    string accessToken
+    datetime issuedAt
+    datetime expiresAt "12h"
+  }
+
+  %% ================ AUTHORIZATION SERVICE ================
+  %% Autorización (P2 authz-service): microservicio propio, desacoplado de
+  %% AUTH SERVICE, con base de datos independiente (sin FK cruzada). Recibe
+  %% {rol, recurso} por REST y responde {allowed}; no conoce el JWT ni al USER.
+  AUTHZ_ROLE ||--o{ AUTHZ_ROLE_PERMISSION : incluye
+  PERMISSION ||--o{ AUTHZ_ROLE_PERMISSION : otorgado
+
+  AUTHZ_ROLE {
+    uuid id PK
+    string name "copia por valor de MAKER, CHECKER, AUTHORIZER, ADMIN"
+  }
+  PERMISSION {
+    uuid id PK
+    string code "batch:create, approval:checker, approval:authorizer, core:submit..."
+  }
+  AUTHZ_ROLE_PERMISSION {
+    uuid id PK
+    uuid roleId FK
+    uuid permissionId FK
+  }
+
+  %% ================ TRANSACTION SERVICE ================
+  BATCH ||--o{ TRANSACTION : contiene
+  BATCH ||--|| CSVFILE : referencia
+  TRANSACTION ||--o{ VALIDATION_RESULT : genera
+  BATCH ||--o| CORE_SUBMISSION : envia
+
+  BATCH {
+    uuid id PK
+    string status "PENDING_MAKER..APPROVED..REJECTED"
+    uuid createdBy FK
+    datetime createdAt
+    string csvUrl
+  }
+  TRANSACTION {
+    uuid id PK
+    uuid batchId FK
+    string originAccount
+    string destinationAccount
+    decimal amount
+    string type "TRANSFER, PAYMENT, DEPOSIT"
+    string status
+  }
+  CSVFILE {
+    uuid id PK
+    string bucketPath
+    int rowCount
+    datetime uploadedAt
+  }
+  VALIDATION_RESULT {
+    uuid id PK
+    uuid transactionId FK
+    string rule
+    boolean passed
+    string detail
+  }
+  CORE_SUBMISSION {
+    uuid id PK
+    uuid batchId FK
+    string coreReferenceId
+    string status
+    datetime sentAt
+  }
+
+  %% ================ APPROVAL SERVICE ================
+  APPROVAL_FLOW ||--o{ APPROVAL_STEP : compone
+  APPROVAL_STEP }o--|| APPROVER : ejecutado_por
+
+  APPROVAL_FLOW {
+    uuid id PK
+    uuid batchId FK
+    string currentStep "MAKER, CHECKER, AUTHORIZER"
+    string status
+  }
+  APPROVAL_STEP {
+    uuid id PK
+    uuid flowId FK
+    string stepType
+    string decision "APPROVED, REJECTED"
+    datetime decidedAt
+    string comment
+  }
+  APPROVER {
+    uuid id PK
+    uuid userId FK
+    string role
+  }
+
+  %% ================ NOTIFICATION SERVICE ================
+  NOTIFICATION_REQUEST ||--o{ NOTIFICATION_LOG : produce
+  NOTIFICATION_REQUEST ||--o{ RECIPIENT : dirige_a
+
+  NOTIFICATION_REQUEST {
+    uuid id PK
+    uuid batchId FK
+    string templateCode
+    datetime requestedAt
+  }
+  RECIPIENT {
+    uuid id PK
+    uuid requestId FK
+    string email
+    string transactionId
+  }
+  NOTIFICATION_LOG {
+    uuid id PK
+    uuid requestId FK
+    string status "SENT, FAILED"
+    datetime sentAt
+  }
+
+  %% ================ LOGGING SERVICE ================
+  LOG_ENTRY {
+    uuid id PK
+    string service
+    string level
+    string traceId
+    string message
+    datetime timestamp
+  }

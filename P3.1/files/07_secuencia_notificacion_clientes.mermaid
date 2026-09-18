@@ -1,0 +1,14 @@
+sequenceDiagram
+  participant BUS as Event Bus
+  participant NOT as Notification Service
+  participant MAIL as Servidor de Correo
+  participant LOG as Logging Service
+
+  BUS->>NOT: BatchFullyApproved(batchId, beneficiarios[])
+  loop por cada beneficiario
+    NOT->>NOT: construir plantilla de correo
+    NOT->>MAIL: enviar correo (SMTP / SES)
+    MAIL-->>NOT: ACK envío
+    NOT->>NOT: guardar NotificationLog(status=SENT)
+  end
+  NOT->>LOG: log resumen de notificaciones enviadas

@@ -1,0 +1,109 @@
+classDiagram
+  namespace AuthService {
+    class User {
+      +UUID id
+      +String username
+      +String email
+      +Boolean active
+      +login()
+    }
+    class Role {
+      +UUID id
+      +String name
+    }
+    class Token {
+      +UUID id
+      +String accessToken
+      +DateTime expiresAt
+      +isValid()
+    }
+  }
+  User "1" --> "0..*" Role : tiene
+  User "1" --> "0..*" Token : genera
+
+  namespace AuthorizationService {
+    class AuthzRole {
+      +UUID id
+      +String name
+    }
+    class Permission {
+      +UUID id
+      +String code
+    }
+    class AuthorizationChecker {
+      +checkPermission(role, resource) Boolean
+    }
+  }
+  AuthzRole "1" --> "0..*" Permission : incluye
+  AuthorizationChecker ..> AuthzRole : consulta
+
+  namespace TransactionService {
+    class Batch {
+      +UUID id
+      +String status
+      +UUID createdBy
+      +submit()
+      +changeStatus()
+    }
+    class Transaction {
+      +UUID id
+      +String originAccount
+      +String destinationAccount
+      +Decimal amount
+      +String type
+      +validate()
+    }
+    class ValidationResult {
+      +UUID id
+      +String rule
+      +Boolean passed
+    }
+    class CoreSubmission {
+      +UUID id
+      +String coreReferenceId
+      +sendToCoreBank()
+    }
+  }
+  Batch "1" --> "1..*" Transaction : contiene
+  Transaction "1" --> "0..*" ValidationResult : genera
+  Batch "1" --> "0..1" CoreSubmission : envia
+
+  namespace ApprovalService {
+    class ApprovalFlow {
+      +UUID id
+      +UUID batchId
+      +String currentStep
+      +advanceStep()
+    }
+    class ApprovalStep {
+      +UUID id
+      +String stepType
+      +String decision
+      +approve()
+      +reject()
+    }
+  }
+  ApprovalFlow "1" --> "3" ApprovalStep : compone
+
+  namespace NotificationService {
+    class NotificationRequest {
+      +UUID id
+      +UUID batchId
+      +send()
+    }
+    class Recipient {
+      +UUID id
+      +String email
+    }
+  }
+  NotificationRequest "1" --> "1..*" Recipient : dirige_a
+
+  namespace LoggingService {
+    class LogEntry {
+      +UUID id
+      +String service
+      +String level
+      +String traceId
+      +DateTime timestamp
+    }
+  }

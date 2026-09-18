@@ -1,0 +1,40 @@
+flowchart LR
+  GW["«component»<br/>API Gateway"]
+  AUTH["«component»<br/>Auth Service<br/>(autenticación · P2)"]
+  AUTHZ["«component»<br/>Authorization Service<br/>(autorización · P2, desacoplado)"]
+  TXN["«component»<br/>Transaction Service"]
+  APR["«component»<br/>Approval Service"]
+  NOT["«component»<br/>Notification Service"]
+  LOG["«component»<br/>Logging Service"]
+  CORE["«external system»<br/>Core Bancario"]
+  STORAGE["«external system»<br/>Cloud Storage / FTP"]
+  BUS["«middleware»<br/>Message Broker"]
+  MAIL["«external system»<br/>Servidor de Correo"]
+
+  GW -- "REST «uses»" --> AUTH
+  GW -- "REST «uses»" --> AUTHZ
+  GW -- "REST «uses»" --> TXN
+  GW -- "REST «uses»" --> APR
+  GW -- "REST «uses»" --> LOG
+
+  TXN -- "REST «IValidateToken»" --> AUTH
+  APR -- "REST «IValidateToken»" --> AUTH
+
+  TXN -- "REST «IAuthorize»<br/>retry+backoff" --> AUTHZ
+  APR -- "REST «IAuthorize»<br/>retry+backoff" --> AUTHZ
+
+  TXN -- "REST «uses»" --> CORE
+  TXN -- "REST «uses»" --> STORAGE
+
+  TXN -- "publish BatchFullyApproved" --> BUS
+  APR -- "publish StepApproved" --> BUS
+  BUS -- "subscribe" --> NOT
+  BUS -- "subscribe" --> LOG
+
+  NOT -- "SMTP" --> MAIL
+
+  AUTH -.->|logs| LOG
+  AUTHZ -.->|logs| LOG
+  TXN -.->|logs| LOG
+  APR -.->|logs| LOG
+  NOT -.->|logs| LOG

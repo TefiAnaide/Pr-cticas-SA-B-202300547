@@ -1,0 +1,44 @@
+sequenceDiagram
+  actor Maker
+  actor Checker
+  actor Authorizer
+  participant GW as API Gateway
+  participant AUTH as Auth Service
+  participant AUTHZ as Authorization Service
+  participant APR as Approval Service
+  participant TXN as Transaction Service
+  participant BUS as Event Bus
+
+  Maker->>GW: POST /batches (CSV)
+  GW->>AUTH: validar token
+  AUTH-->>GW: token válido (rol MAKER)
+  GW->>AUTHZ: POST /authorize {rol: MAKER, recurso: batch:create}
+  alt responde a tiempo
+    AUTHZ-->>GW: {allowed: true}
+  else timeout / caído
+    loop hasta MAX_RETRIES, esperando BACKOFF_MS × 2^intento
+      GW->>AUTHZ: reintento POST /authorize
+    end
+    Note over GW: reintentos agotados → allowed = false (fail-closed)
+  end
+  GW->>TXN: crear batch + validar reglas de negocio
+  TXN-->>GW: batch PENDING_CHECKER
+  GW->>APR: iniciar ApprovalFlow (step=MAKER, decision=APPROVED)
+
+  Checker->>GW: PUT /approvals/{id}/step (CHECKER)
+  GW->>AUTH: validar token (rol CHECKER)
+  AUTH-->>GW: OK
+  GW->>AUTHZ: POST /authorize {rol: CHECKER, recurso: approval:checker} (retry+backoff)
+  AUTHZ-->>GW: {allowed: true}
+  GW->>APR: registrar decisión CHECKER
+  APR-->>GW: flow PENDING_AUTHORIZER
+
+  Authorizer->>GW: PUT /approvals/{id}/step (AUTHORIZER)
+  GW->>AUTH: validar token (rol AUTHORIZER)
+  AUTH-->>GW: OK
+  GW->>AUTHZ: POST /authorize {rol: AUTHORIZER, recurso: approval:authorizer} (retry+backoff)
+  AUTHZ-->>GW: {allowed: true}
+  GW->>APR: registrar decisión AUTHORIZER
+  APR->>APR: flow = APPROVED
+  APR->>BUS: publish BatchFullyApproved(batchId)
+  APR-->>GW: 200 OK

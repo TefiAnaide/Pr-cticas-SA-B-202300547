@@ -1,0 +1,47 @@
+flowchart TB
+  subgraph Cliente
+    WebApp[App Web / Móvil Banca Corporativa]
+  end
+
+  WebApp --> GW[API Gateway]
+
+  subgraph Microservicios
+    AUTH[Auth Service<br/>OAuth 12h + JWT/AES<br/>Módulo P2]
+    AUTHZ[Authorization Service<br/>Matriz de roles/permisos<br/>desacoplado · Módulo P2]
+    TXN[Transaction Service<br/>CSV, validación, lotes]
+    APR[Approval Service<br/>Maker-Checker-Authorizer]
+    NOT[Notification Service<br/>Envío de correos]
+    LOG[Logging Service<br/>Centralizado / Auditable]
+  end
+
+  GW --> AUTH
+  GW --> AUTHZ
+  GW --> TXN
+  GW --> APR
+  GW --> LOG
+
+  TXN -- "REST «IAuthorize»<br/>retry+backoff" --> AUTHZ
+  APR -- "REST «IAuthorize»<br/>retry+backoff" --> AUTHZ
+
+  TXN --> S3[(Cloud Storage / FTP<br/>Archivos CSV)]
+  TXN <--> DBT[(DB Transaction)]
+  APR <--> DBA[(DB Approval)]
+  AUTH <--> DBAU[(DB Auth)]
+  AUTHZ <--> DBAZ[(DB Authorization<br/>Roles/Permisos)]
+  NOT <--> DBN[(DB Notification)]
+
+  TXN -- REST --> CORE[Sistema Core Bancario<br/>Compensación Interbancaria]
+
+  BUS{{Event Bus<br/>Kafka / RabbitMQ}}
+  TXN -- publica BatchFullyApproved --> BUS
+  APR -- publica StepApproved --> BUS
+  BUS --> NOT
+  BUS --> LOG
+
+  AUTH -. logs .-> LOG
+  AUTHZ -. logs .-> LOG
+  TXN -. logs .-> LOG
+  APR -. logs .-> LOG
+  NOT -. logs .-> LOG
+
+  NOT --> SMTP[Proveedor de Correo<br/>SES / SMTP]

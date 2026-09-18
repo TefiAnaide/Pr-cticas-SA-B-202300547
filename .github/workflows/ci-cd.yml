@@ -150,6 +150,9 @@ jobs:
             kind load docker-image "${IMAGE_PREFIX}/p5-${svc}:${{ github.sha }}" --name sa-p5-ci
           done
 
+      - name: Registrar el repo de Helm de Bitnami
+        run: helm repo add bitnami https://charts.bitnami.com/bitnami
+
       - name: Resolver dependencias del chart (postgresql / rabbitmq)
         run: helm dependency build P5/charts/sa-p5
 

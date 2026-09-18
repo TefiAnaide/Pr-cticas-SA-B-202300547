@@ -1,0 +1,36 @@
+# Overrides especificos de AWS/EKS sobre el chart sa-p5 de la Practica 5.
+# Se usa junto a values.yaml y values.local.yaml (secretos reales, gitignored):
+#
+#   helm install sa-p5 . -f values.yaml -f ../../../P6/charts/values-aws.yaml -f values.local.yaml
+#
+# Solo se pisa lo que cambia por ser un proveedor de nube distinto a minikube:
+# - image.repository de los 6 subcharts -> ruta completa de ECR.
+# - ingress.host -> se completa cuando exista el hostname del ELB (Fase 4 del runbook).
+# storageClass no se toca: se deja vacio para que Postgres/RabbitMQ usen la
+# StorageClass default de EKS (gp2, via el driver CSI de EBS instalado en la Fase 2).
+
+api-gateway:
+  image:
+    repository: 011528263421.dkr.ecr.us-east-1.amazonaws.com/p6/api-gateway
+auth-service:
+  image:
+    repository: 011528263421.dkr.ecr.us-east-1.amazonaws.com/p6/auth-service
+authz-service:
+  image:
+    repository: 011528263421.dkr.ecr.us-east-1.amazonaws.com/p6/authz-service
+pedidos-service:
+  image:
+    repository: 011528263421.dkr.ecr.us-east-1.amazonaws.com/p6/pedidos-service
+productos-service:
+  image:
+    repository: 011528263421.dkr.ecr.us-east-1.amazonaws.com/p6/productos-service
+reportes-service:
+  image:
+    repository: 011528263421.dkr.ecr.us-east-1.amazonaws.com/p6/reportes-service
+
+ingress:
+  hosts:
+    - host: a36ce9884ec5b46459e7e3484015a1c2-2002816833.us-east-1.elb.amazonaws.com
+      paths:
+        - path: /
+          pathType: Prefix

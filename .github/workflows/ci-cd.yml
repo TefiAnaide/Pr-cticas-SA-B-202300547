@@ -69,7 +69,10 @@ jobs:
         run: pip install -r requirements-dev.txt
 
       - name: Ejecutar pruebas
-        run: pytest -q
+        # "python -m pytest" (y no "pytest" a secas) agrega el directorio
+        # actual a sys.path, que es lo que permite que las pruebas hagan
+        # "from src...." sin necesitar un __init__.py en tests/.
+        run: python -m pytest -q
 
   # ---------- Etapa 2: Construir y publicar imagenes Docker ----------
   build-and-push:

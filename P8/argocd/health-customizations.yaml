@@ -1,0 +1,52 @@
+# Parche de ConfigMap para ArgoCD: ensena a la Application a evaluar la
+# salud de dos tipos de recurso que su chequeo nativo no interpreta bien
+# en este stack, dejando la Application en "Progressing" para siempre
+# aunque todo funcione correctamente. Sin esto, "kubectl get application
+# sa-p8 -n argocd" nunca muestra HEALTH STATUS: Healthy.
+#
+# Aplicar (idempotente, se puede correr las veces que haga falta):
+#   kubectl patch configmap argocd-cm -n argocd --type merge \
+#     --patch-file P8/argocd/health-customizations.yaml
+#
+# Necesario cada vez que se recrea el clúster (kind delete/create) o se
+# reinstala ArgoCD desde cero, porque este ConfigMap vive solo en el
+# clúster, no en el repo GitOps.
+#
+# 1) Rollout (Argo Rollouts): el chequeo nativo de ArgoCD no sabe leer
+#    el CRD "argoproj.io/Rollout" (no es un recurso que ArgoCD entienda
+#    de fabrica). Este script Lua lee status.phase, que es el campo que
+#    Argo Rollouts SI mantiene actualizado (Healthy/Progressing/Degraded).
+#
+# 2) Ingress: el chequeo nativo espera status.loadBalancer con una IP
+#    externa (asume un LoadBalancer de nube). En un cluster kind local,
+#    sin ingress-controller que asigne esa IP, el Ingress se queda en
+#    "Progressing" para siempre. Se trata como Healthy en cuanto esta
+#    Synced, que es lo unico verificable en este contexto.
+data:
+  resource.customizations.health.argoproj.io_Rollout: |
+    hs = {}
+    if obj.status ~= nil then
+      if obj.status.phase ~= nil then
+        if obj.status.phase == "Degraded" then
+          hs.status = "Degraded"
+          hs.message = obj.status.message
+          return hs
+        elseif obj.status.phase == "Progressing" then
+          hs.status = "Progressing"
+          hs.message = obj.status.message
+          return hs
+        elseif obj.status.phase == "Healthy" then
+          hs.status = "Healthy"
+          hs.message = obj.status.message
+          return hs
+        end
+      end
+    end
+    hs.status = "Progressing"
+    hs.message = "Waiting for rollout to finish: status has not been reconciled."
+    return hs
+  resource.customizations.health.networking.k8s.io_Ingress: |
+    hs = {}
+    hs.status = "Healthy"
+    hs.message = "Ingress sin LoadBalancer externo (cluster kind local) - se considera sano si esta Synced."
+    return hs

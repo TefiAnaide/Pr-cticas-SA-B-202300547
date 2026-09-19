@@ -2,3 +2,8 @@
 **/.terraform/
 *.tfstate
 *.tfstate.backup
+
+# Salidas locales de Fix_Script_p8.sh (datos personales de verificacion)
+p8.conf
+reporte_p8_*.txt
+resultados_p8.csv

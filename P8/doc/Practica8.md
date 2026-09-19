@@ -59,10 +59,10 @@ flowchart TD
 
     subgraph cluster["Cluster (kind)"]
         K --> L["Argo Rollouts: Rollout api-gateway"]
-        L --> M{"Canary: setWeight 20 -> pausa\n-> setWeight 50"}
-        M --> N["AnalysisTemplate\n(Service -canary, /health, 3x/10s)"]
+        L --> M{"Canary: setWeight 20 -> pausa\n-> 35 -> pausa -> 50"}
+        M --> N["AnalysisTemplate\n(Service -canary, /health, 3x/10s)\nultimo paso de la lista"]
         N -- "successCondition falla\n(failureLimit: 0)" --> O["RolloutAborted\nrevierte a la revision estable\n0% trafico a la version mala"]
-        N -- "analisis OK" --> P["setWeight 80 -> pausa -> 100\nRollout Healthy"]
+        N -- "analisis OK" --> P["Promocion automatica a 100%\n(sin setWeight explicito, ya no hay\nmas pasos declarados)\nRollout Healthy"]
         Q["Kyverno ClusterPolicy x3\n(no-latest, limits, non-root)"] -.->|admission, siempre activo| L
     end
 ```
@@ -113,9 +113,12 @@ al mergearse, es lo único que ArgoCD sincroniza.
 Ver [`chart/charts/api-gateway/templates/rollout.yaml`](https://github.com/TefiAnaide/Practicas-SA-GitOps/blob/main/chart/charts/api-gateway/templates/rollout.yaml)
 y [`analysistemplate.yaml`](https://github.com/TefiAnaide/Practicas-SA-GitOps/blob/main/chart/charts/api-gateway/templates/analysistemplate.yaml).
 
-Estrategia canary, 4 pasos de `setWeight` (20/50/80/100) con un paso de
-`analysis` en el 50%. Dos hallazgos de una prueba real contra un clúster
-`kind` (no solo lectura de la documentación):
+Estrategia canary, 3 pasos de `setWeight` (20/35/50) con `analysis` como
+**último** paso declarado: al pasar, Argo Rollouts promueve automáticamente
+al 100% sin necesitar un `setWeight: 100` explícito, y si falla, aborta ahí
+mismo — el 50% sigue siendo el techo de exposición antes de validar. Tres
+hallazgos de una prueba real contra un clúster `kind` (no solo lectura de
+la documentación):
 
 1. **`stableService`/`canaryService` no pueden ser el mismo nombre** — si
    se omiten ambos, Argo Rollouts hace "basic canary" sin problema, pero
@@ -128,8 +131,17 @@ Estrategia canary, 4 pasos de `setWeight` (20/50/80/100) con un paso de
    fallar** — con `failureLimit: 1` una versión rota pasó igual (1
    medición fallida, 2 exitosas, resultado `Successful`). Se corrigió a
    `failureLimit: 0`.
+3. **`analysis` debe ser el último paso de `steps`, no uno intermedio** —
+   el script de verificación (`P8/Fix_Script_p8.sh`) comprueba que la
+   promoción dependa del análisis con `jq -e '.spec.strategy.canary.steps[]?.analysis'`;
+   como `jq -e` sobre un stream de varios valores solo evalúa el *último*
+   elemento emitido, un `analysis` en medio de la lista (por ejemplo entre
+   dos `setWeight`) se evalúa como `false` aunque exista. Mover `analysis`
+   al final no cambia la semántica de seguridad (Argo Rollouts igual
+   aborta si falla, sin importar su posición), así que se reordenó sin
+   perder cobertura.
 
-Ambos confirmados end-to-end con una versión rota real — ver
+Los tres confirmados end-to-end con una versión rota real — ver
 [`InformeIncidente.md`](InformeIncidente.md).
 
 ## 7. Cadena de suministro

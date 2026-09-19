@@ -76,9 +76,9 @@ Este es el que más conviene demostrar **en vivo**, no solo mostrar
 capturas — ya lo probamos una vez de punta a punta y funciona:
 
 ```bash
-# version buena (sube por los 4 pasos y queda Healthy)
+# version buena (sube 20 -> 35 -> 50, pasa el analisis y promueve solo a 100%)
 kubectl argo rollouts set image api-gateway -n sa-p8 \
-  api-gateway=ghcr.io/tefianaide/pr-cticas-sa-b-202300547/p8-api-gateway:v0.2.0
+  api-gateway=ghcr.io/tefianaide/pr-cticas-sa-b-202300547/p8-api-gateway:v0.2.1
 kubectl argo rollouts get rollout api-gateway -n sa-p8 --watch
 ```
 

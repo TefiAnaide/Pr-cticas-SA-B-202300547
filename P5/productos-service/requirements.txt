@@ -3,6 +3,10 @@ uvicorn[standard]==0.32.1
 psycopg2-binary==2.9.10
 pydantic==2.10.3
 strawberry-graphql[fastapi]==0.257.0
+# graphql-core 3.3 quito graphql.execution.ExecutionContext, que strawberry
+# 0.257 importa: sin fijarla, cualquier rebuild instala 3.3 y el servicio no
+# arranca (paso con la imagen v0.3.0).
+graphql-core==3.2.13
 pyjwt==2.14.0
 httpx==0.28.1
 python-dotenv==1.0.1

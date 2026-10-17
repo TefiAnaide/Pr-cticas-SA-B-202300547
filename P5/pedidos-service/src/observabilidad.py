@@ -73,7 +73,9 @@ def _configurar_registros() -> None:
     )
     raiz = logging.getLogger()
     raiz.handlers = [salida]
-    raiz.setLevel(os.getenv("LOG_LEVEL", "INFO"))
+    # El chart pasa LOG_LEVEL en minusculas ("debug", como lo usa el gateway en
+    # Node); logging de Python solo acepta mayusculas.
+    raiz.setLevel(os.getenv("LOG_LEVEL", "INFO").upper())
     # uvicorn configura sus propios handlers en texto plano antes de importar
     # la app: se retiran para que todo salga por el handler JSON de la raiz.
     for nombre in ("uvicorn", "uvicorn.error", "uvicorn.access"):

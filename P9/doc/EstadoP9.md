@@ -7,16 +7,16 @@ tenga push no cuenta.
 
 ## Resumen
 
-| Criterio | Verificador oficial | Con el bug del script corregido | Esperado al cerrar los pendientes |
-|---|---:|---:|---:|
-| 2.1 Bootstrap automatizado | 14 / 14 | 14 / 14 | 14 / 14 |
-| 2.2 Estado remoto e IaC | 6 / 8 | 6 / 8 | **8 / 8** |
-| 2.3 Respaldo con Velero | **2 / 14** ⚠️ | 14 / 14 | 14 / 14 |
-| 2.4 Continuidad de secretos | 5 / 8 | 5 / 8 | **8 / 8** |
-| 2.5 Resiliencia ante fallo | 6 / 8 | 6 / 8 | 6 / 8 (decisión, ver abajo) |
-| 2.6 Restauración verificada | 5 / 8 | 5 / 8 | **8 / 8** |
-| **Conocimiento** | **38 / 60** | **50 / 60** | **58 / 60** |
-| Eliminatorios | `readme` `tfstate-en-repo` `sin-respaldo` | `readme` `tfstate-en-repo` | ninguno |
+| Criterio | Oficial (05:05) | `_corregido` (05:05) | `_corregido` tras el push `7d20576` | Esperado al cerrar pendientes |
+|---|---:|---:|---:|---:|
+| 2.1 Bootstrap automatizado | 14 / 14 | 14 / 14 | 14 / 14 | 14 / 14 |
+| 2.2 Estado remoto e IaC | 6 / 8 | 6 / 8 | **8 / 8** ✅ | 8 / 8 |
+| 2.3 Respaldo con Velero | **2 / 14** ⚠️ | 14 / 14 | 14 / 14 | 14 / 14 |
+| 2.4 Continuidad de secretos | 5 / 8 | 5 / 8 | 5 / 8 | **8 / 8** |
+| 2.5 Resiliencia ante fallo | 6 / 8 | 6 / 8 | 6 / 8 | 6 / 8 (decisión, ver abajo) |
+| 2.6 Restauración verificada | 5 / 8 | 5 / 8 | 5 / 8 | **8 / 8** |
+| **Conocimiento** | **38 / 60** | **50 / 60** | **52 / 60** | **58 / 60** |
+| Eliminatorios | `readme` `tfstate-en-repo` `sin-respaldo` | `readme` `tfstate-en-repo` | `readme` | ninguno |
 
 > ⚠️ La diferencia entre la primera y la segunda columna **no es un fallo de
 > la práctica**, sino un bug del verificador. Está explicado en la sección siguiente.
@@ -55,17 +55,26 @@ hasta 18 puntos (2.3 completo menos la instalación, la comprobación de
 `kube-system` en 2.4 y la de restauraciones en 2.6) y recibe el eliminatorio
 falso `sin-respaldo`. Con jq 1.7.1 (el de esta máquina) se reproduce siempre.
 
-**Corrección** (una sustitución, no cambia la lógica):
+**Corrección:** una sola sustitución, `"${VAR:-{}}"` → `"${VAR:-"{}"}"`.
+Con `"{}"` entre comillas la expansión cierra donde debe: vacía da `{}` y
+con datos da el JSON intacto.
 
-```bash
-sed 's/:-{}}"/:-"{}"}"/g' verificar_p9.sh     # "${SCHED:-{}}"  ->  "${SCHED:-"{}"}"
-```
+El auxiliar autorizó modificar los scripts **indicando qué, dónde y por
+qué**, así que se dejaron copias aparte y los originales quedan intactos
+(su hash coincide con el publicado):
 
-Con esa corrección, 2.3 da 14/14 con los mismos datos: 116 respaldos
-`Completed`, Schedule con ttl, destino MinIO `Available` y File System
-Backup de volúmenes. **No modifique el script oficial en el repo**, porque el
-auxiliar compara su hash. Repórtelo con el ejemplo de arriba para que
-publiquen una v1.1 o califiquen 2.3 en la demostración.
+| Archivo | Qué es |
+|---|---|
+| `P9/verificar_p9.sh` | Original, sin tocar (sha256 `367900de…`) |
+| `P9/verificar_p9_corregido.sh` | Copia con la corrección en las 7 líneas y `VERSION="1.0-fix1"` |
+| `P10/verificar_p10.sh` | Original, sin tocar (sha256 `0f423f01…`) |
+| `P10/verificar_p10_corregido.sh` | Copia con la corrección en las 8 líneas y `VERSION="1.0-fix1"` |
+
+Cada copia tiene al inicio un bloque con el hash del original, las líneas
+exactas, el porqué y el ejemplo que lo reproduce. `diff` entre original y
+copia muestra solo el bloque, `VERSION` y esas líneas. Con la copia, 2.3 da
+14/14 con los mismos datos: 116 respaldos `Completed`, Schedule con ttl,
+destino MinIO `Available` y File System Backup de volúmenes.
 
 ---
 
@@ -88,7 +97,7 @@ publiquen una v1.1 o califiquen 2.3 en la demostración.
 | # | Qué | Puntos | Por qué | Estado |
 |---|---|---:|---|---|
 | 1 | **Falta `P9/README.md`** (eliminatorio `readme`) | — | No existía todavía. | Se escribe cuando estén los tiempos medidos de la reconstrucción. |
-| 2 | **`P8/terraform/terraform.tfstate` versionado** (eliminatorio `tfstate-en-repo`) | 2.2: −2 | Se subió en el commit `b3f716d P8`. El verificador busca `*.tfstate*` en **todo** el repo, no solo en `/P9`. | ✅ Arreglado en local: `git rm --cached` + `.gitignore` en la raíz. **Falta commit y push.** |
+| 2 | **`P8/terraform/terraform.tfstate` versionado** (eliminatorio `tfstate-en-repo`) | 2.2: −2 | Se subió en el commit `b3f716d P8`. El verificador busca `*.tfstate*` en **todo** el repo, no solo en `/P9`. | ✅ Resuelto en `7d20576` (`git rm --cached`; el archivo sigue en disco). Falta subir el `.gitignore` de la raíz para que no vuelva a entrar. |
 | 3 | **El respaldo no cubre `kube-system`** | 2.4: −3 | El Schedule solo respalda `sa-p8`. La llave tenía respaldo (bucket `sa-p9-llaves`), pero el verificador exige un **Backup de Velero** que incluya el namespace de la llave. | ✅ Schedule `velero-sealed-secrets-llave` agregado en GitOps (commit `d0bb9f2`). **Falta push.** Al sincronizar corre de inmediato. |
 | 4 | **Ningún `Restore` en el clúster** | 2.6: −3 | El clúster actual se creó el 2026-09-27, después de las pruebas del 26. Los objetos `Restore` viven en el clúster, no en MinIO: se perdieron con él. | Se resuelve con la reconstrucción cronometrada (el bootstrap restaura y crea un `Restore`). |
 | 5 | **Postgres, RabbitMQ y `reportes-service-consumer` con 1 réplica** | 2.5: −2 | El verificador exige ≥ 2 réplicas en **toda** carga del namespace. Replicar Postgres implica `architecture: replication` en el chart, que renombra el pod y el PVC (`postgres-primary-0`) y rompe `restaurar-datos.sh`, la prueba de datos y la sonda. | **Decisión: no se cambia.** Se declara como punto único de fallo en el informe de DR (la rúbrica 1.2 premia identificarlo). Se pierden 2 pts. |
@@ -108,12 +117,14 @@ publiquen una v1.1 o califiquen 2.3 en la demostración.
 ## Pendientes, en orden
 
 - [ ] **Push del repo GitOps** (`d0bb9f2`): sin esto no hay respaldo de `kube-system` y la reconstrucción no lo incluye.
-- [ ] **Commit y push del repo de código**: `.gitignore`, borrado del tfstate de P8, `bootstrap.sh`, `p9.conf`, `doc/`.
+- [x] Push del repo de código (`7d20576`): borrado del tfstate de P8, `bootstrap.sh`, `p9.conf`, `doc/`.
+- [ ] Commit del `.gitignore` de la raíz y de `verificar_p9_corregido.sh` / `verificar_p10_corregido.sh`.
 - [ ] Respaldo de referencia con filas marcadas → `destruir.sh` → `bootstrap.sh` (RTO real).
 - [ ] Prueba de pérdida de nodo sobre el clúster reconstruido (las réplicas quedan repartidas).
 - [ ] Informe de DR (`doc/InformeDR.md`) con los seis campos y los tiempos reales.
 - [ ] `P9/README.md` con la tabla 4.1 completa.
 - [ ] Preguntas teóricas (`doc/PreguntasTeoricas.md`) para preparar la defensa.
 - [ ] Video de 5 a 8 minutos y su minutaje en el README.
-- [ ] Reportar el bug del verificador al auxiliar.
+- [x] Copias corregidas y documentadas de los verificadores (P9 y P10).
+- [ ] Avisar al auxiliar que se usa `verificar_p9_corregido.sh` y por qué.
 - [ ] El día de la calificación: encender MinIO y el clúster, revisar que no haya pods en `Unknown` (runbook §6) y exportar `KUBECONFIG`.

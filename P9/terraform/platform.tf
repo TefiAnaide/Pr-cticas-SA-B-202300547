@@ -20,12 +20,20 @@ resource "kubernetes_resource_quota" "app" {
     name      = "sa-p8-quota"
     namespace = kubernetes_namespace.app.metadata[0].name
   }
+  # Practica 10: cuota ampliada (era 1500m / 1536Mi / 3000m / 3Gi). Medido el
+  # 2026-10-17 con la release v0.3.1: con la cuota anterior un rolling update
+  # NO cabia. Durante el despliegue conviven pods viejos y nuevos (maxSurge
+  # 25% = 1 pod extra por servicio) y limits.cpu llego a 2980m/3000m:
+  # "exceeded quota" bloqueo a productos, reportes y hasta a los CronJobs.
+  # Ademas el SDK de OpenTelemetry sube la memoria del api-gateway de 96Mi a
+  # 256Mi y la de los servicios Python de 128Mi a 192Mi (values-p10.yaml).
+  # Margen: la carga estable mas un servicio completo en surge.
   spec {
     hard = {
-      "requests.cpu"           = "1500m"
-      "requests.memory"        = "1536Mi"
-      "limits.cpu"             = "3000m"
-      "limits.memory"          = "3Gi"
+      "requests.cpu"           = "2000m"
+      "requests.memory"        = "2Gi"
+      "limits.cpu"             = "4000m"
+      "limits.memory"          = "4Gi"
       "pods"                   = "30"
       "persistentvolumeclaims" = "5"
     }

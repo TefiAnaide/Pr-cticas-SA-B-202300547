@@ -100,10 +100,12 @@ esperar 300 "BackupStorageLocation Available" \
 # aparezcan los de la vida anterior del cluster.
 esperar 150 "respaldos sincronizados desde MinIO" \
   bash -c "[ \$(kubectl get backups.velero.io -n velero --no-headers 2>/dev/null | wc -l) -gt 0 ]"
-# Solo respaldos Completed tomados ANTES de este bootstrap (nunca uno del
-# cluster recien creado, que tendria la base vacia).
-ULTIMO=$(kubectl get backups.velero.io -n velero -o json 2>/dev/null | jq -r --argjson t0 "$T0" '
+# Solo respaldos Completed del namespace de la aplicacion (no los de la
+# llave, que cubren kube-system) tomados ANTES de este bootstrap (nunca uno
+# del cluster recien creado, que tendria la base vacia).
+ULTIMO=$(kubectl get backups.velero.io -n velero -o json 2>/dev/null | jq -r --argjson t0 "$T0" --arg ns "$APP_NS" '
   [.items[] | select(.status.phase=="Completed")
+            | select((.spec.includedNamespaces // []) | index($ns))
             | select((.status.startTimestamp | fromdateiso8601) < $t0)]
   | sort_by(.status.startTimestamp) | last | .metadata.name // empty')
 if [ -n "$ULTIMO" ]; then

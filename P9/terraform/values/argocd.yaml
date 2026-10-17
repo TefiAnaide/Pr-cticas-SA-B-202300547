@@ -1,0 +1,70 @@
+# Valores de ArgoCD para el cluster de la Practica 9.
+# Lo que en la Practica 8 era un parche manual (P8/argocd/health-customizations.yaml,
+# "reaplicar cada vez que se recrea el cluster") ahora vive aqui: forma
+# parte del bootstrap y no depende de que alguien lo recuerde.
+
+# Componentes que este flujo no usa (ahorra memoria en un cluster local).
+dex:
+  enabled: false
+notifications:
+  enabled: false
+applicationSet:
+  replicas: 0   # app-of-apps no usa ApplicationSet (el chart 10.x no tiene "enabled")
+
+# La liveness por defecto (/healthz?full=true, timeout 1s) incluye la
+# conexion a Git: un corte de internet del host la hace fallar, el
+# repo-server entra en CrashLoopBackOff y sigue caido cuando la red vuelve
+# (observado en la P8 -411 reinicios- y en la P9). Sin "full=true" solo
+# comprueba que el proceso vive; los errores de Git ya los reporta la
+# Application como ComparisonError, sin tumbar el pod.
+repoServer:
+  livenessProbe:
+    httpPath: /healthz
+    timeoutSeconds: 5
+    failureThreshold: 6
+
+configs:
+  params:
+    server.insecure: true
+  cm:
+    timeout.reconciliation: 60s
+
+    # App-of-apps: ArgoCD >= 1.8 ya no evalua la salud de una Application
+    # hija, asi que las sync-waves de la raiz no esperarian a que cada hija
+    # termine. Con esto, la ola N+1 empieza solo cuando la ola N esta Healthy.
+    resource.customizations.health.argoproj.io_Application: |
+      hs = {}
+      hs.status = "Progressing"
+      hs.message = ""
+      if obj.status ~= nil then
+        if obj.status.health ~= nil then
+          hs.status = obj.status.health.status
+          if obj.status.health.message ~= nil then
+            hs.message = obj.status.health.message
+          end
+        end
+      end
+      return hs
+
+    # Igual que en la Practica 8: ArgoCD no sabe leer el estado de un Rollout.
+    resource.customizations.health.argoproj.io_Rollout: |
+      hs = {}
+      if obj.status ~= nil then
+        if obj.status.phase ~= nil then
+          if obj.status.phase == "Degraded" or obj.status.phase == "Progressing" or obj.status.phase == "Healthy" then
+            hs.status = obj.status.phase
+            hs.message = obj.status.message
+            return hs
+          end
+        end
+      end
+      hs.status = "Progressing"
+      hs.message = "Waiting for rollout to finish: status has not been reconciled."
+      return hs
+
+    # Sin ingress-controller en kind, el Ingress nunca recibe IP externa.
+    resource.customizations.health.networking.k8s.io_Ingress: |
+      hs = {}
+      hs.status = "Healthy"
+      hs.message = "Ingress sin LoadBalancer externo (cluster kind local)."
+      return hs

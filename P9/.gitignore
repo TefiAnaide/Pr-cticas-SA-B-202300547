@@ -1,0 +1,9 @@
+# Estado de Terraform: vive SOLO en el backend remoto (MinIO)
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tflock
+
+# Archivos temporales del sondeo de la prueba de perdida de nodo
+evidencias/.sondeo-*

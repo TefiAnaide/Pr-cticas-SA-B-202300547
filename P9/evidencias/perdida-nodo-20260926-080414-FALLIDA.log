@@ -1,0 +1,494 @@
+[2026-09-26T08:04:14-0600] [1790431454] MARCA PRUEBA_NODO_INICIO
+[2026-09-26T08:04:14-0600] [1790431454] == Distribucion inicial
+[2026-09-26T08:04:14-0600] [1790431454] $ kubectl get pods -n sa-p8 -l app.kubernetes.io/name=api-gateway -o wide
+NAME                           READY   STATUS    RESTARTS   AGE   IP            NODE            NOMINATED NODE   READINESS GATES
+api-gateway-867fd669c7-nrjff   1/1     Running   0          47m   10.244.1.15   sa-p9-worker    <none>           <none>
+api-gateway-867fd669c7-qsz2z   1/1     Running   0          47m   10.244.2.13   sa-p9-worker2   <none>           <none>
+[2026-09-26T08:04:15-0600] [1790431455] $ kubectl get pdb -n sa-p8
+NAME                      MIN AVAILABLE   MAX UNAVAILABLE   ALLOWED DISRUPTIONS   AGE
+api-gateway               1               N/A               1                     47m
+auth-service              1               N/A               0                     47m
+authz-service             1               N/A               0                     47m
+pedidos-service           1               N/A               0                     47m
+postgres                  N/A             1                 1                     47m
+productos-service         1               N/A               0                     47m
+rabbitmq                  N/A             1                 1                     47m
+reportes-service-server   1               N/A               0                     47m
+[2026-09-26T08:04:16-0600] [1790431456] Nodo a drenar: sa-p9-worker (postgres-0 esta en sa-p9-worker2)
+[2026-09-26T08:04:16-0600] [1790431456] == Sondeo continuo de /health (1/s)
+[2026-09-26T08:04:26-0600] [1790431466] MARCA DRENAJE_INICIO sa-p9-worker
+[2026-09-26T08:04:26-0600] [1790431466] $ kubectl drain sa-p9-worker --ignore-daemonsets --delete-emptydir-data --timeout=240s
+node/sa-p9-worker cordoned
+Warning: ignoring DaemonSet-managed Pods: kube-system/kindnet-ksq67, kube-system/kube-proxy-ww47l, velero/node-agent-rfrqx
+evicting pod velero/velero-6746f4884-5mmvl
+evicting pod argocd/argocd-redis-55cf7879b9-89vx8
+evicting pod sa-p8/api-gateway-867fd669c7-nrjff
+evicting pod argo-rollouts/argo-rollouts-64945b6584-pkk9z
+evicting pod kyverno/kyverno-migrate-resources-chrf5
+evicting pod argocd/argocd-server-789b775dd9-bqghr
+evicting pod kyverno/kyverno-admission-controller-6c94986f99-sw8b2
+evicting pod sa-p8/pedidos-service-78646789dc-r5rc6
+evicting pod sa-p8/authz-service-6495d47497-5cf7p
+evicting pod sa-p8/rabbitmq-0
+evicting pod sa-p8/productos-service-6789c45697-xwv8l
+error when evicting pods/"pedidos-service-78646789dc-r5rc6" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+error when evicting pods/"authz-service-6495d47497-5cf7p" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+pod/kyverno-migrate-resources-chrf5 evicted
+error when evicting pods/"productos-service-6789c45697-xwv8l" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+I0926 08:04:32.013500 3050797 request.go:754] "Waited before sending request" delay="1.000612606s" reason="client-side throttling, not priority and fairness" verb="GET" URL="https://127.0.0.1:36851/api/v1/namespaces/sa-p8/pods/rabbitmq-0"
+evicting pod sa-p8/pedidos-service-78646789dc-r5rc6
+error when evicting pods/"pedidos-service-78646789dc-r5rc6" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/authz-service-6495d47497-5cf7p
+error when evicting pods/"authz-service-6495d47497-5cf7p" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/productos-service-6789c45697-xwv8l
+error when evicting pods/"productos-service-6789c45697-xwv8l" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/pedidos-service-78646789dc-r5rc6
+error when evicting pods/"pedidos-service-78646789dc-r5rc6" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/authz-service-6495d47497-5cf7p
+error when evicting pods/"authz-service-6495d47497-5cf7p" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/productos-service-6789c45697-xwv8l
+error when evicting pods/"productos-service-6789c45697-xwv8l" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+pod/kyverno-admission-controller-6c94986f99-sw8b2 evicted
+I0926 08:04:42.013760 3050797 request.go:754] "Waited before sending request" delay="1.586748347s" reason="client-side throttling, not priority and fairness" verb="GET" URL="https://127.0.0.1:36851/api/v1/namespaces/velero/pods/velero-6746f4884-5mmvl"
+evicting pod sa-p8/pedidos-service-78646789dc-r5rc6
+error when evicting pods/"pedidos-service-78646789dc-r5rc6" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/authz-service-6495d47497-5cf7p
+error when evicting pods/"authz-service-6495d47497-5cf7p" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/productos-service-6789c45697-xwv8l
+error when evicting pods/"productos-service-6789c45697-xwv8l" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/pedidos-service-78646789dc-r5rc6
+error when evicting pods/"pedidos-service-78646789dc-r5rc6" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+I0926 08:04:52.013811 3050797 request.go:754] "Waited before sending request" delay="1.39168299s" reason="client-side throttling, not priority and fairness" verb="GET" URL="https://127.0.0.1:36851/api/v1/namespaces/sa-p8/pods/rabbitmq-0"
+evicting pod sa-p8/authz-service-6495d47497-5cf7p
+error when evicting pods/"authz-service-6495d47497-5cf7p" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/productos-service-6789c45697-xwv8l
+error when evicting pods/"productos-service-6789c45697-xwv8l" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/pedidos-service-78646789dc-r5rc6
+error when evicting pods/"pedidos-service-78646789dc-r5rc6" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/authz-service-6495d47497-5cf7p
+error when evicting pods/"authz-service-6495d47497-5cf7p" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/productos-service-6789c45697-xwv8l
+error when evicting pods/"productos-service-6789c45697-xwv8l" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+I0926 08:05:02.213517 3050797 request.go:754] "Waited before sending request" delay="1.190849582s" reason="client-side throttling, not priority and fairness" verb="GET" URL="https://127.0.0.1:36851/api/v1/namespaces/argocd/pods/argocd-server-789b775dd9-bqghr"
+evicting pod sa-p8/pedidos-service-78646789dc-r5rc6
+error when evicting pods/"pedidos-service-78646789dc-r5rc6" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/authz-service-6495d47497-5cf7p
+error when evicting pods/"authz-service-6495d47497-5cf7p" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/productos-service-6789c45697-xwv8l
+error when evicting pods/"productos-service-6789c45697-xwv8l" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/pedidos-service-78646789dc-r5rc6
+error when evicting pods/"pedidos-service-78646789dc-r5rc6" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+I0926 08:05:12.413326 3050797 request.go:754] "Waited before sending request" delay="1.376684636s" reason="client-side throttling, not priority and fairness" verb="GET" URL="https://127.0.0.1:36851/api/v1/namespaces/sa-p8/pods/authz-service-6495d47497-5cf7p"
+evicting pod sa-p8/authz-service-6495d47497-5cf7p
+error when evicting pods/"authz-service-6495d47497-5cf7p" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/productos-service-6789c45697-xwv8l
+error when evicting pods/"productos-service-6789c45697-xwv8l" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/pedidos-service-78646789dc-r5rc6
+error when evicting pods/"pedidos-service-78646789dc-r5rc6" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/authz-service-6495d47497-5cf7p
+error when evicting pods/"authz-service-6495d47497-5cf7p" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/productos-service-6789c45697-xwv8l
+error when evicting pods/"productos-service-6789c45697-xwv8l" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+I0926 08:05:22.413629 3050797 request.go:754] "Waited before sending request" delay="1.190885947s" reason="client-side throttling, not priority and fairness" verb="GET" URL="https://127.0.0.1:36851/api/v1/namespaces/sa-p8/pods/rabbitmq-0"
+evicting pod sa-p8/pedidos-service-78646789dc-r5rc6
+error when evicting pods/"pedidos-service-78646789dc-r5rc6" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/authz-service-6495d47497-5cf7p
+error when evicting pods/"authz-service-6495d47497-5cf7p" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/productos-service-6789c45697-xwv8l
+error when evicting pods/"productos-service-6789c45697-xwv8l" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/pedidos-service-78646789dc-r5rc6
+error when evicting pods/"pedidos-service-78646789dc-r5rc6" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/authz-service-6495d47497-5cf7p
+error when evicting pods/"authz-service-6495d47497-5cf7p" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+I0926 08:05:32.613603 3050797 request.go:754] "Waited before sending request" delay="1.380217323s" reason="client-side throttling, not priority and fairness" verb="GET" URL="https://127.0.0.1:36851/api/v1/namespaces/argocd/pods/argocd-server-789b775dd9-bqghr"
+evicting pod sa-p8/productos-service-6789c45697-xwv8l
+error when evicting pods/"productos-service-6789c45697-xwv8l" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/pedidos-service-78646789dc-r5rc6
+error when evicting pods/"pedidos-service-78646789dc-r5rc6" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/authz-service-6495d47497-5cf7p
+error when evicting pods/"authz-service-6495d47497-5cf7p" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/productos-service-6789c45697-xwv8l
+error when evicting pods/"productos-service-6789c45697-xwv8l" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+I0926 08:05:42.813867 3050797 request.go:754] "Waited before sending request" delay="1.189578715s" reason="client-side throttling, not priority and fairness" verb="GET" URL="https://127.0.0.1:36851/api/v1/namespaces/argo-rollouts/pods/argo-rollouts-64945b6584-pkk9z"
+evicting pod sa-p8/pedidos-service-78646789dc-r5rc6
+error when evicting pods/"pedidos-service-78646789dc-r5rc6" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/authz-service-6495d47497-5cf7p
+error when evicting pods/"authz-service-6495d47497-5cf7p" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/productos-service-6789c45697-xwv8l
+error when evicting pods/"productos-service-6789c45697-xwv8l" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/pedidos-service-78646789dc-r5rc6
+error when evicting pods/"pedidos-service-78646789dc-r5rc6" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/authz-service-6495d47497-5cf7p
+error when evicting pods/"authz-service-6495d47497-5cf7p" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/productos-service-6789c45697-xwv8l
+error when evicting pods/"productos-service-6789c45697-xwv8l" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+I0926 08:05:53.013537 3050797 request.go:754] "Waited before sending request" delay="1.363248912s" reason="client-side throttling, not priority and fairness" verb="GET" URL="https://127.0.0.1:36851/api/v1/namespaces/sa-p8/pods/rabbitmq-0"
+evicting pod sa-p8/pedidos-service-78646789dc-r5rc6
+error when evicting pods/"pedidos-service-78646789dc-r5rc6" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/authz-service-6495d47497-5cf7p
+error when evicting pods/"authz-service-6495d47497-5cf7p" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/productos-service-6789c45697-xwv8l
+error when evicting pods/"productos-service-6789c45697-xwv8l" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/pedidos-service-78646789dc-r5rc6
+error when evicting pods/"pedidos-service-78646789dc-r5rc6" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+I0926 08:06:03.213689 3050797 request.go:754] "Waited before sending request" delay="1.394855063s" reason="client-side throttling, not priority and fairness" verb="GET" URL="https://127.0.0.1:36851/api/v1/namespaces/sa-p8/pods/api-gateway-867fd669c7-nrjff"
+evicting pod sa-p8/authz-service-6495d47497-5cf7p
+error when evicting pods/"authz-service-6495d47497-5cf7p" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/productos-service-6789c45697-xwv8l
+error when evicting pods/"productos-service-6789c45697-xwv8l" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/pedidos-service-78646789dc-r5rc6
+error when evicting pods/"pedidos-service-78646789dc-r5rc6" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/authz-service-6495d47497-5cf7p
+error when evicting pods/"authz-service-6495d47497-5cf7p" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/productos-service-6789c45697-xwv8l
+error when evicting pods/"productos-service-6789c45697-xwv8l" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+I0926 08:06:13.213912 3050797 request.go:754] "Waited before sending request" delay="1.190790193s" reason="client-side throttling, not priority and fairness" verb="GET" URL="https://127.0.0.1:36851/api/v1/namespaces/velero/pods/velero-6746f4884-5mmvl"
+evicting pod sa-p8/pedidos-service-78646789dc-r5rc6
+error when evicting pods/"pedidos-service-78646789dc-r5rc6" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/authz-service-6495d47497-5cf7p
+error when evicting pods/"authz-service-6495d47497-5cf7p" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/productos-service-6789c45697-xwv8l
+error when evicting pods/"productos-service-6789c45697-xwv8l" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/pedidos-service-78646789dc-r5rc6
+error when evicting pods/"pedidos-service-78646789dc-r5rc6" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/authz-service-6495d47497-5cf7p
+error when evicting pods/"authz-service-6495d47497-5cf7p" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+I0926 08:06:23.412965 3050797 request.go:754] "Waited before sending request" delay="1.392644142s" reason="client-side throttling, not priority and fairness" verb="GET" URL="https://127.0.0.1:36851/api/v1/namespaces/sa-p8/pods/rabbitmq-0"
+evicting pod sa-p8/productos-service-6789c45697-xwv8l
+error when evicting pods/"productos-service-6789c45697-xwv8l" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/pedidos-service-78646789dc-r5rc6
+error when evicting pods/"pedidos-service-78646789dc-r5rc6" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/authz-service-6495d47497-5cf7p
+error when evicting pods/"authz-service-6495d47497-5cf7p" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/productos-service-6789c45697-xwv8l
+error when evicting pods/"productos-service-6789c45697-xwv8l" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+I0926 08:06:33.412975 3050797 request.go:754] "Waited before sending request" delay="1.170943269s" reason="client-side throttling, not priority and fairness" verb="GET" URL="https://127.0.0.1:36851/api/v1/namespaces/argocd/pods/argocd-server-789b775dd9-bqghr"
+evicting pod sa-p8/pedidos-service-78646789dc-r5rc6
+error when evicting pods/"pedidos-service-78646789dc-r5rc6" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/authz-service-6495d47497-5cf7p
+error when evicting pods/"authz-service-6495d47497-5cf7p" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/productos-service-6789c45697-xwv8l
+error when evicting pods/"productos-service-6789c45697-xwv8l" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/pedidos-service-78646789dc-r5rc6
+error when evicting pods/"pedidos-service-78646789dc-r5rc6" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/authz-service-6495d47497-5cf7p
+error when evicting pods/"authz-service-6495d47497-5cf7p" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+I0926 08:06:43.413694 3050797 request.go:754] "Waited before sending request" delay="1.38167811s" reason="client-side throttling, not priority and fairness" verb="GET" URL="https://127.0.0.1:36851/api/v1/namespaces/sa-p8/pods/productos-service-6789c45697-xwv8l"
+evicting pod sa-p8/productos-service-6789c45697-xwv8l
+error when evicting pods/"productos-service-6789c45697-xwv8l" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/pedidos-service-78646789dc-r5rc6
+error when evicting pods/"pedidos-service-78646789dc-r5rc6" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/authz-service-6495d47497-5cf7p
+error when evicting pods/"authz-service-6495d47497-5cf7p" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/productos-service-6789c45697-xwv8l
+error when evicting pods/"productos-service-6789c45697-xwv8l" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/pedidos-service-78646789dc-r5rc6
+error when evicting pods/"pedidos-service-78646789dc-r5rc6" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+I0926 08:06:53.613582 3050797 request.go:754] "Waited before sending request" delay="1.394535807s" reason="client-side throttling, not priority and fairness" verb="GET" URL="https://127.0.0.1:36851/api/v1/namespaces/sa-p8/pods/api-gateway-867fd669c7-nrjff"
+evicting pod sa-p8/authz-service-6495d47497-5cf7p
+error when evicting pods/"authz-service-6495d47497-5cf7p" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/productos-service-6789c45697-xwv8l
+error when evicting pods/"productos-service-6789c45697-xwv8l" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/pedidos-service-78646789dc-r5rc6
+error when evicting pods/"pedidos-service-78646789dc-r5rc6" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/authz-service-6495d47497-5cf7p
+error when evicting pods/"authz-service-6495d47497-5cf7p" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/productos-service-6789c45697-xwv8l
+error when evicting pods/"productos-service-6789c45697-xwv8l" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+I0926 08:07:03.812846 3050797 request.go:754] "Waited before sending request" delay="1.392762748s" reason="client-side throttling, not priority and fairness" verb="GET" URL="https://127.0.0.1:36851/api/v1/namespaces/argo-rollouts/pods/argo-rollouts-64945b6584-pkk9z"
+evicting pod sa-p8/pedidos-service-78646789dc-r5rc6
+error when evicting pods/"pedidos-service-78646789dc-r5rc6" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/authz-service-6495d47497-5cf7p
+error when evicting pods/"authz-service-6495d47497-5cf7p" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/productos-service-6789c45697-xwv8l
+error when evicting pods/"productos-service-6789c45697-xwv8l" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/pedidos-service-78646789dc-r5rc6
+error when evicting pods/"pedidos-service-78646789dc-r5rc6" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+I0926 08:07:13.813571 3050797 request.go:754] "Waited before sending request" delay="1.394673624s" reason="client-side throttling, not priority and fairness" verb="GET" URL="https://127.0.0.1:36851/api/v1/namespaces/argocd/pods/argocd-redis-55cf7879b9-89vx8"
+evicting pod sa-p8/authz-service-6495d47497-5cf7p
+error when evicting pods/"authz-service-6495d47497-5cf7p" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/productos-service-6789c45697-xwv8l
+error when evicting pods/"productos-service-6789c45697-xwv8l" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/pedidos-service-78646789dc-r5rc6
+error when evicting pods/"pedidos-service-78646789dc-r5rc6" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/authz-service-6495d47497-5cf7p
+error when evicting pods/"authz-service-6495d47497-5cf7p" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/productos-service-6789c45697-xwv8l
+error when evicting pods/"productos-service-6789c45697-xwv8l" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+I0926 08:07:24.013644 3050797 request.go:754] "Waited before sending request" delay="1.194848094s" reason="client-side throttling, not priority and fairness" verb="GET" URL="https://127.0.0.1:36851/api/v1/namespaces/sa-p8/pods/api-gateway-867fd669c7-nrjff"
+evicting pod sa-p8/pedidos-service-78646789dc-r5rc6
+error when evicting pods/"pedidos-service-78646789dc-r5rc6" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/authz-service-6495d47497-5cf7p
+error when evicting pods/"authz-service-6495d47497-5cf7p" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/productos-service-6789c45697-xwv8l
+error when evicting pods/"productos-service-6789c45697-xwv8l" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/pedidos-service-78646789dc-r5rc6
+error when evicting pods/"pedidos-service-78646789dc-r5rc6" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/authz-service-6495d47497-5cf7p
+error when evicting pods/"authz-service-6495d47497-5cf7p" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+I0926 08:07:34.014083 3050797 request.go:754] "Waited before sending request" delay="1.393823318s" reason="client-side throttling, not priority and fairness" verb="GET" URL="https://127.0.0.1:36851/api/v1/namespaces/velero/pods/velero-6746f4884-5mmvl"
+evicting pod sa-p8/productos-service-6789c45697-xwv8l
+error when evicting pods/"productos-service-6789c45697-xwv8l" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/pedidos-service-78646789dc-r5rc6
+error when evicting pods/"pedidos-service-78646789dc-r5rc6" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/authz-service-6495d47497-5cf7p
+error when evicting pods/"authz-service-6495d47497-5cf7p" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/productos-service-6789c45697-xwv8l
+error when evicting pods/"productos-service-6789c45697-xwv8l" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+I0926 08:07:44.213632 3050797 request.go:754] "Waited before sending request" delay="1.191589171s" reason="client-side throttling, not priority and fairness" verb="GET" URL="https://127.0.0.1:36851/api/v1/namespaces/argocd/pods/argocd-redis-55cf7879b9-89vx8"
+evicting pod sa-p8/pedidos-service-78646789dc-r5rc6
+error when evicting pods/"pedidos-service-78646789dc-r5rc6" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/authz-service-6495d47497-5cf7p
+error when evicting pods/"authz-service-6495d47497-5cf7p" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/productos-service-6789c45697-xwv8l
+error when evicting pods/"productos-service-6789c45697-xwv8l" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/pedidos-service-78646789dc-r5rc6
+error when evicting pods/"pedidos-service-78646789dc-r5rc6" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/authz-service-6495d47497-5cf7p
+error when evicting pods/"authz-service-6495d47497-5cf7p" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/productos-service-6789c45697-xwv8l
+error when evicting pods/"productos-service-6789c45697-xwv8l" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+I0926 08:07:54.413513 3050797 request.go:754] "Waited before sending request" delay="1.392810428s" reason="client-side throttling, not priority and fairness" verb="GET" URL="https://127.0.0.1:36851/api/v1/namespaces/argocd/pods/argocd-server-789b775dd9-bqghr"
+evicting pod sa-p8/pedidos-service-78646789dc-r5rc6
+error when evicting pods/"pedidos-service-78646789dc-r5rc6" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/authz-service-6495d47497-5cf7p
+error when evicting pods/"authz-service-6495d47497-5cf7p" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/productos-service-6789c45697-xwv8l
+error when evicting pods/"productos-service-6789c45697-xwv8l" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/pedidos-service-78646789dc-r5rc6
+error when evicting pods/"pedidos-service-78646789dc-r5rc6" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+I0926 08:08:04.613586 3050797 request.go:754] "Waited before sending request" delay="1.39394084s" reason="client-side throttling, not priority and fairness" verb="GET" URL="https://127.0.0.1:36851/api/v1/namespaces/argo-rollouts/pods/argo-rollouts-64945b6584-pkk9z"
+evicting pod sa-p8/authz-service-6495d47497-5cf7p
+error when evicting pods/"authz-service-6495d47497-5cf7p" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/productos-service-6789c45697-xwv8l
+error when evicting pods/"productos-service-6789c45697-xwv8l" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/pedidos-service-78646789dc-r5rc6
+error when evicting pods/"pedidos-service-78646789dc-r5rc6" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/authz-service-6495d47497-5cf7p
+error when evicting pods/"authz-service-6495d47497-5cf7p" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/productos-service-6789c45697-xwv8l
+error when evicting pods/"productos-service-6789c45697-xwv8l" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+I0926 08:08:14.813208 3050797 request.go:754] "Waited before sending request" delay="1.193565414s" reason="client-side throttling, not priority and fairness" verb="GET" URL="https://127.0.0.1:36851/api/v1/namespaces/argocd/pods/argocd-redis-55cf7879b9-89vx8"
+evicting pod sa-p8/pedidos-service-78646789dc-r5rc6
+error when evicting pods/"pedidos-service-78646789dc-r5rc6" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/authz-service-6495d47497-5cf7p
+error when evicting pods/"authz-service-6495d47497-5cf7p" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/productos-service-6789c45697-xwv8l
+error when evicting pods/"productos-service-6789c45697-xwv8l" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/pedidos-service-78646789dc-r5rc6
+error when evicting pods/"pedidos-service-78646789dc-r5rc6" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/authz-service-6495d47497-5cf7p
+error when evicting pods/"authz-service-6495d47497-5cf7p" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+I0926 08:08:24.813679 3050797 request.go:754] "Waited before sending request" delay="1.394406767s" reason="client-side throttling, not priority and fairness" verb="GET" URL="https://127.0.0.1:36851/api/v1/namespaces/argocd/pods/argocd-server-789b775dd9-bqghr"
+evicting pod sa-p8/productos-service-6789c45697-xwv8l
+error when evicting pods/"productos-service-6789c45697-xwv8l" -n "sa-p8" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+evicting pod sa-p8/pedidos-service-78646789dc-r5rc6
+evicting pod sa-p8/authz-service-6495d47497-5cf7p
+evicting pod sa-p8/productos-service-6789c45697-xwv8l
+There are pending pods in node "sa-p9-worker" when an error occurred: [error when waiting for pod "argocd-redis-55cf7879b9-89vx8" in namespace "argocd" to terminate: context deadline exceeded, error when waiting for pod "velero-6746f4884-5mmvl" in namespace "velero" to terminate: context deadline exceeded, error when waiting for pod "argo-rollouts-64945b6584-pkk9z" in namespace "argo-rollouts" to terminate: context deadline exceeded, error when waiting for pod "argocd-server-789b775dd9-bqghr" in namespace "argocd" to terminate: context deadline exceeded, error when waiting for pod "api-gateway-867fd669c7-nrjff" in namespace "sa-p8" to terminate: context deadline exceeded, error when waiting for pod "rabbitmq-0" in namespace "sa-p8" to terminate: context deadline exceeded, error when evicting pods/"pedidos-service-78646789dc-r5rc6" -n "sa-p8": global timeout reached: 4m0s, error when evicting pods/"authz-service-6495d47497-5cf7p" -n "sa-p8": global timeout reached: 4m0s, error when evicting pods/"productos-service-6789c45697-xwv8l" -n "sa-p8": global timeout reached: 4m0s]
+pod/argo-rollouts-64945b6584-pkk9z
+pod/argocd-redis-55cf7879b9-89vx8
+pod/argocd-server-789b775dd9-bqghr
+pod/api-gateway-867fd669c7-nrjff
+pod/authz-service-6495d47497-5cf7p
+pod/pedidos-service-78646789dc-r5rc6
+pod/productos-service-6789c45697-xwv8l
+pod/rabbitmq-0
+pod/velero-6746f4884-5mmvl
+error: unable to drain node "sa-p9-worker" due to error: [error when waiting for pod "argocd-redis-55cf7879b9-89vx8" in namespace "argocd" to terminate: context deadline exceeded, error when waiting for pod "velero-6746f4884-5mmvl" in namespace "velero" to terminate: context deadline exceeded, error when waiting for pod "argo-rollouts-64945b6584-pkk9z" in namespace "argo-rollouts" to terminate: context deadline exceeded, error when waiting for pod "argocd-server-789b775dd9-bqghr" in namespace "argocd" to terminate: context deadline exceeded, error when waiting for pod "api-gateway-867fd669c7-nrjff" in namespace "sa-p8" to terminate: context deadline exceeded, error when waiting for pod "rabbitmq-0" in namespace "sa-p8" to terminate: context deadline exceeded, error when evicting pods/"pedidos-service-78646789dc-r5rc6" -n "sa-p8": global timeout reached: 4m0s, error when evicting pods/"authz-service-6495d47497-5cf7p" -n "sa-p8": global timeout reached: 4m0s, error when evicting pods/"productos-service-6789c45697-xwv8l" -n "sa-p8": global timeout reached: 4m0s], continuing command...
+There are pending nodes to be drained:
+ sa-p9-worker
+error when waiting for pod "argocd-redis-55cf7879b9-89vx8" in namespace "argocd" to terminate: context deadline exceeded
+error when waiting for pod "velero-6746f4884-5mmvl" in namespace "velero" to terminate: context deadline exceeded
+error when waiting for pod "argo-rollouts-64945b6584-pkk9z" in namespace "argo-rollouts" to terminate: context deadline exceeded
+error when waiting for pod "argocd-server-789b775dd9-bqghr" in namespace "argocd" to terminate: context deadline exceeded
+error when waiting for pod "api-gateway-867fd669c7-nrjff" in namespace "sa-p8" to terminate: context deadline exceeded
+error when waiting for pod "rabbitmq-0" in namespace "sa-p8" to terminate: context deadline exceeded
+error when evicting pods/"pedidos-service-78646789dc-r5rc6" -n "sa-p8": global timeout reached: 4m0s
+error when evicting pods/"authz-service-6495d47497-5cf7p" -n "sa-p8": global timeout reached: 4m0s
+error when evicting pods/"productos-service-6789c45697-xwv8l" -n "sa-p8": global timeout reached: 4m0s
+[2026-09-26T08:08:30-0600] [1790431710] MARCA DRENAJE_FIN sa-p9-worker
+[2026-09-26T08:08:30-0600] [1790431710] $ kubectl get pods -n sa-p8 -l app.kubernetes.io/name=api-gateway -o wide
+NAME                           READY   STATUS    RESTARTS   AGE    IP            NODE            NOMINATED NODE   READINESS GATES
+api-gateway-867fd669c7-mflz7   1/1     Running   0          4m4s   10.244.2.50   sa-p9-worker2   <none>           <none>
+api-gateway-867fd669c7-nrjff   0/1     Error     0          52m    10.244.1.15   sa-p9-worker    <none>           <none>
+api-gateway-867fd669c7-qsz2z   1/1     Running   0          52m    10.244.2.13   sa-p9-worker2   <none>           <none>
+[2026-09-26T08:08:51-0600] [1790431731] MARCA NODO_RESTAURADO sa-p9-worker
+[2026-09-26T08:08:51-0600] [1790431731] $ kubectl uncordon sa-p9-worker
+node/sa-p9-worker uncordoned
+08:04:17 1790431457 OK
+08:04:18 1790431458 OK
+08:04:20 1790431460 OK
+08:04:22 1790431462 OK
+08:04:24 1790431464 OK
+08:04:25 1790431465 OK
+08:04:28 1790431468 OK
+08:04:30 1790431470 OK
+08:04:32 1790431472 OK
+08:04:33 1790431473 OK
+08:04:35 1790431475 OK
+08:04:37 1790431477 OK
+08:04:39 1790431479 OK
+08:04:41 1790431481 OK
+08:04:42 1790431482 OK
+08:04:44 1790431484 OK
+08:04:46 1790431486 OK
+08:04:48 1790431488 OK
+08:04:50 1790431490 OK
+08:04:51 1790431491 OK
+08:04:53 1790431493 OK
+08:04:55 1790431495 OK
+08:04:57 1790431497 OK
+08:04:58 1790431498 OK
+08:05:00 1790431500 OK
+08:05:02 1790431502 OK
+08:05:04 1790431504 OK
+08:05:06 1790431506 OK
+08:05:07 1790431507 OK
+08:05:09 1790431509 OK
+08:05:11 1790431511 OK
+08:05:13 1790431513 OK
+08:05:15 1790431515 OK
+08:05:16 1790431516 OK
+08:05:18 1790431518 OK
+08:05:20 1790431520 OK
+08:05:22 1790431522 OK
+08:05:24 1790431524 OK
+08:05:26 1790431526 OK
+08:05:28 1790431528 OK
+08:05:30 1790431530 OK
+08:05:32 1790431532 OK
+08:05:34 1790431534 OK
+08:05:36 1790431536 OK
+08:05:38 1790431538 OK
+08:05:39 1790431539 OK
+08:05:41 1790431541 OK
+08:05:43 1790431543 OK
+08:05:45 1790431545 OK
+08:05:47 1790431547 OK
+08:05:49 1790431549 OK
+08:05:51 1790431551 OK
+08:05:53 1790431553 OK
+08:05:54 1790431554 OK
+08:05:56 1790431556 OK
+08:05:58 1790431558 OK
+08:06:00 1790431560 OK
+08:06:01 1790431561 OK
+08:06:03 1790431563 OK
+08:06:05 1790431565 OK
+08:06:07 1790431567 OK
+08:06:09 1790431569 OK
+08:06:11 1790431571 OK
+08:06:12 1790431572 OK
+08:06:14 1790431574 OK
+08:06:16 1790431576 OK
+08:06:18 1790431578 OK
+08:06:20 1790431580 OK
+08:06:21 1790431581 OK
+08:06:23 1790431583 OK
+08:06:25 1790431585 OK
+08:06:26 1790431586 OK
+08:06:28 1790431588 OK
+08:06:30 1790431590 OK
+08:06:31 1790431591 OK
+08:06:33 1790431593 OK
+08:06:34 1790431594 OK
+08:06:36 1790431596 OK
+08:06:38 1790431598 OK
+08:06:40 1790431600 OK
+08:06:41 1790431601 OK
+08:06:43 1790431603 OK
+08:06:45 1790431605 OK
+08:06:47 1790431607 OK
+08:06:49 1790431609 OK
+08:06:50 1790431610 OK
+08:06:52 1790431612 OK
+08:06:53 1790431613 OK
+08:06:55 1790431615 OK
+08:06:57 1790431617 OK
+08:06:59 1790431619 OK
+08:07:00 1790431620 OK
+08:07:02 1790431622 OK
+08:07:04 1790431624 OK
+08:07:05 1790431625 OK
+08:07:07 1790431627 OK
+08:07:09 1790431629 OK
+08:07:11 1790431631 OK
+08:07:13 1790431633 OK
+08:07:14 1790431634 OK
+08:07:16 1790431636 OK
+08:07:18 1790431638 OK
+08:07:20 1790431640 OK
+08:07:22 1790431642 OK
+08:07:24 1790431644 OK
+08:07:25 1790431645 OK
+08:07:27 1790431647 OK
+08:07:29 1790431649 OK
+08:07:31 1790431651 OK
+08:07:32 1790431652 OK
+08:07:34 1790431654 OK
+08:07:36 1790431656 OK
+08:07:38 1790431658 OK
+08:07:40 1790431660 OK
+08:07:42 1790431662 OK
+08:07:44 1790431664 OK
+08:07:46 1790431666 OK
+08:07:48 1790431668 OK
+08:07:50 1790431670 OK
+08:07:51 1790431671 OK
+08:07:53 1790431673 OK
+08:07:54 1790431674 OK
+08:07:56 1790431676 OK
+08:07:58 1790431678 OK
+08:07:59 1790431679 OK
+08:08:01 1790431681 OK
+08:08:02 1790431682 OK
+08:08:04 1790431684 OK
+08:08:06 1790431686 OK
+08:08:08 1790431688 OK
+08:08:10 1790431690 OK
+08:08:11 1790431691 OK
+08:08:13 1790431693 OK
+08:08:15 1790431695 OK
+08:08:17 1790431697 OK
+08:08:19 1790431699 OK
+08:08:21 1790431701 OK
+08:08:22 1790431702 OK
+08:08:24 1790431704 OK
+08:08:25 1790431705 OK
+08:08:27 1790431707 OK
+08:08:29 1790431709 OK
+08:08:31 1790431711 OK
+08:08:32 1790431712 OK
+08:08:34 1790431714 OK
+08:08:36 1790431716 OK
+08:08:38 1790431718 OK
+08:08:39 1790431719 OK
+08:08:41 1790431721 OK
+08:08:43 1790431723 OK
+08:08:45 1790431725 OK
+08:08:47 1790431727 OK
+08:08:48 1790431728 OK
+08:08:50 1790431730 OK
+[2026-09-26T08:08:51-0600] [1790431731] Peticiones: 154, fallidas: 0, disponibilidad: 100.00%
+[2026-09-26T08:08:51-0600] [1790431731] $ kubectl get pods -n sa-p8 -o wide
+NAME                                                READY   STATUS      RESTARTS      AGE     IP            NODE            NOMINATED NODE   READINESS GATES
+api-gateway-867fd669c7-mflz7                        1/1     Running     0             4m24s   10.244.2.50   sa-p9-worker2   <none>           <none>
+api-gateway-867fd669c7-nrjff                        0/1     Error       0             52m     10.244.1.15   sa-p9-worker    <none>           <none>
+api-gateway-867fd669c7-qsz2z                        1/1     Running     0             52m     10.244.2.13   sa-p9-worker2   <none>           <none>
+auth-service-84d87b8c4b-h68jh                       1/1     Running     1 (50m ago)   52m     10.244.2.10   sa-p9-worker2   <none>           <none>
+authz-service-6495d47497-5cf7p                      1/1     Running     0             52m     10.244.1.12   sa-p9-worker    <none>           <none>
+pedidos-service-78646789dc-r5rc6                    1/1     Running     1 (49m ago)   52m     10.244.1.13   sa-p9-worker    <none>           <none>
+postgres-0                                          1/1     Running     0             6m35s   10.244.2.45   sa-p9-worker2   <none>           <none>
+productos-service-6789c45697-xwv8l                  1/1     Running     1 (49m ago)   52m     10.244.1.11   sa-p9-worker    <none>           <none>
+rabbitmq-0                                          0/1     Completed   0             52m     10.244.1.16   sa-p9-worker    <none>           <none>
+reportes-service-59b98ffb8-s7k7z                    1/1     Running     1 (49m ago)   52m     10.244.2.9    sa-p9-worker2   <none>           <none>
+reportes-service-consumer-99c876d9c-2zfp6           0/1     Running     5 (3s ago)    52m     10.244.2.11   sa-p9-worker2   <none>           <none>
+reportes-service-cronjob-heartbeat-29840520-fpw2d   0/1     Completed   0             8m51s   10.244.2.35   sa-p9-worker2   <none>           <none>
+reportes-service-cronjob-heartbeat-29840522-599wc   0/1     Completed   0             6m51s   10.244.2.41   sa-p9-worker2   <none>           <none>
+reportes-service-cronjob-heartbeat-29840524-5q2z5   0/1     Completed   0             4m51s   10.244.2.49   sa-p9-worker2   <none>           <none>
+reportes-service-cronjob-resumen-29840480-4nhrp     0/1     Completed   0             48m     10.244.2.16   sa-p9-worker2   <none>           <none>
+reportes-service-cronjob-resumen-29840510-wx5vl     0/1     Completed   0             15m     10.244.2.26   sa-p9-worker2   <none>           <none>
+reportes-service-cronjob-resumen-29840520-gfbr8     0/1     Completed   0             8m51s   10.244.2.36   sa-p9-worker2   <none>           <none>
+[2026-09-26T08:08:51-0600] [1790431731] MARCA PRUEBA_NODO_FIN
+[2026-09-26T08:08:51-0600] [1790431731] Registro: /home/estefaniamazariegos/Escritorio/2Semestre2026/SA/LAB/Pr-cticas-SA-B-202300547/P9/evidencias/perdida-nodo-20260926-080414.log

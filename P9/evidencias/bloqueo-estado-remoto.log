@@ -1,0 +1,22 @@
+# Prueba de bloqueo del estado remoto (2026-09-26T07:05:26-0600)
+# Dos 'terraform plan' simultaneos contra s3://sa-p9-tfstate/p9/terraform.tfstate (use_lockfile=true)
+$ terraform plan -lock-timeout=0s   # segundo proceso
+Error: Error acquiring the state lock
+
+Error message: operation error S3: PutObject, https response error
+StatusCode: 412, RequestID: 18D8E0B74DBE4534, HostID:
+dd9025bab4ad464b049177c95eb6ebf374d3b3fd1af9251148b658df7ac2e3e8, api error
+PreconditionFailed: At least one of the pre-conditions you specified did not
+hold
+Lock Info:
+  ID:        81f305fd-4630-878f-c1e4-7b559e4a285e
+  Path:      sa-p9-tfstate/p9/terraform.tfstate
+  Operation: OperationTypePlan
+  Who:       estefaniamazariegos@LinuxMintEstefM
+  Version:   1.16.4
+  Created:   2026-09-26 13:05:27.991874143 +0000 UTC
+
+$ aws s3 ls s3://sa-p9-tfstate --recursive
+2026-09-26 07:04:21      62260 p9/terraform.tfstate
+$ git ls-files | grep tfstate  (en el repo)
+0

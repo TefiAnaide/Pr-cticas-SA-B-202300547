@@ -1,0 +1,39 @@
+# Almacenamiento de objetos EXTERNO al cluster (Practica 9, seccion 3.3).
+#
+# Corre como contenedor Docker en el host, no dentro de kind: destruir el
+# cluster (kind delete / terraform destroy) no lo toca. Guarda tres cosas:
+#   sa-p9-tfstate  estado remoto de Terraform (+ lockfile)
+#   sa-p9-velero   respaldos de Velero (manifiestos + datos de volumenes)
+#   sa-p9-llaves   respaldo de la llave de Sealed Secrets
+#
+# Se conecta a la red Docker "kind" para que los pods (Velero) lo alcancen
+# por nombre: http://sa-p9-minio:9000. Desde el host: http://localhost:9100.
+#
+# Credenciales: ~/.sa-p9/minio.env (fuera del repo, lo genera
+# P9/scripts/lib.sh la primera vez). Nunca en este archivo.
+name: sa-p9-almacenamiento
+
+services:
+  minio:
+    # minio/minio ya no se publica en Docker Hub (MinIO dejo de distribuir
+    # imagenes de la edicion comunitaria en 2025); esta es la ultima
+    # compilacion publica de Bitnami, con tag fijo.
+    image: docker.io/bitnamilegacy/minio:2025.7.23-debian-12-r5
+    container_name: sa-p9-minio
+    env_file:
+      - ${HOME}/.sa-p9/minio.env
+    ports:
+      - "9100:9000"   # API S3
+      - "9101:9001"   # consola web
+    volumes:
+      - sa-p9-minio-data:/bitnami/minio/data
+    networks:
+      - kind
+    restart: unless-stopped
+
+volumes:
+  sa-p9-minio-data:
+
+networks:
+  kind:
+    external: true

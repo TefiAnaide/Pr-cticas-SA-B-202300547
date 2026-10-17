@@ -1,0 +1,82 @@
+[2026-09-26T07:57:49-0600] [1790431069] MARCA PRUEBA_RESTAURACION_INICIO
+[2026-09-26T07:57:49-0600] [1790431069] == 1. Datos de referencia
+CREATE TABLE
+INSERT 0 50
+INSERT 0 1
+[2026-09-26T07:58:50-0600] [1790431130] dr_marcas: 50 filas, huella 1f784fd6ec120734a89751fb5ce5a04509a34e2a9430de4e1a4ec4680711bdc8 | productos: 2 filas
+[2026-09-26T07:58:50-0600] [1790431130] == 2. Respaldo (misma plantilla que el Schedule velero-sa-p8-cada-hora)
+[2026-09-26T07:58:50-0600] [1790431130] $ velero backup create prueba-datos-20260926-075749 --from-schedule velero-sa-p8-cada-hora --wait
+time="2026-09-26T07:58:51-06:00" level=info msg="No Schedule.template.metadata.labels set - using Schedule.labels for backup object" backup=velero/prueba-datos-20260926-075749 labels="map[app.kubernetes.io/instance:velero app.kubernetes.io/managed-by:Helm app.kubernetes.io/name:velero app.kubernetes.io/version:1.18.2 helm.sh/chart:velero-12.2.0]"
+Creating backup from schedule, all other filters are ignored.
+Backup request "prueba-datos-20260926-075749" submitted successfully.
+Waiting for backup to complete. You may safely press ctrl-c to stop waiting - your backup will continue in the background.
+..........................................................................................................................
+Backup completed with status: Completed. You may check for more information using the commands `velero backup describe prueba-datos-20260926-075749` and `velero backup logs prueba-datos-20260926-075749`.
+[2026-09-26T08:00:54-0600] [1790431254] Respaldo prueba-datos-20260926-075749 -> Completed (inicio 2026-09-26T13:58:51Z)
+  Pod Volume Backups - kopia:
+    Completed:
+      sa-p8/postgres-0: data (size: 89232257, incremental size: 21772344), dshm (size: 2159104, incremental size: 1079552), empty-dir (size: 32941, incremental size: 32848)
+      sa-p8/rabbitmq-0: data (size: 195536), empty-dir (size: 24368412)
+      sa-p8/reportes-service-consumer-99c876d9c-2zfp6: health (size: 18, incremental size: 18)
+
+HooksAttempted:  0
+[2026-09-26T08:00:55-0600] [1790431255] == 3. Escrituras posteriores al respaldo (se perderan)
+INSERT 0 5
+[2026-09-26T08:01:19-0600] [1790431279] dr_marcas ahora: antes-del-respaldo=50 despues-del-respaldo=5 
+[2026-09-26T08:01:19-0600] [1790431279] == 4. DESASTRE: eliminacion de datos
+[2026-09-26T08:01:19-0600] [1790431279] MARCA DESASTRE_DATOS
+DROP TABLE
+DELETE 2
+[2026-09-26T08:01:36-0600] [1790431296] Tras el borrado: productos=0, dr_marcas=command terminated with exit code 1
+[2026-09-26T08:01:36-0600] [1790431296] == 5. Restauracion desde prueba-datos-20260926-075749
+[2026-09-26T08:01:36-0600] [1790431296] MARCA RESTAURACION_INICIO
+2026-09-26T08:01:36-0600 Pausando ArgoCD (sa-p9-root y sa-p8)
+2026-09-26T08:01:37-0600 Retirando el Postgres actual (StatefulSet + PVC)
+statefulset.apps "postgres" deleted from sa-p8 namespace
+persistentvolumeclaim "data-postgres-0" deleted from sa-p8 namespace
+2026-09-26T08:02:11-0600 velero restore create restaurar-pg-20260926-080136 --from-backup prueba-datos-20260926-075749
+Restore request "restaurar-pg-20260926-080136" submitted successfully.
+Waiting for restore to complete. You may safely press ctrl-c to stop waiting - your restore will continue in the background.
+..............................................
+Restore completed with status: Completed. You may check for more information using the commands `velero restore describe restaurar-pg-20260926-080136` and `velero restore logs restaurar-pg-20260926-080136`.
+2026-09-26T08:02:59-0600 Restore restaurar-pg-20260926-080136 -> Completed
+Phase:                       [32mCompleted[0m
+Total items to be restored:  4
+Items restored:              4
+
+Started:    2026-09-26 08:02:13 -0600 CST
+Completed:  2026-09-26 08:02:59 -0600 CST
+
+Backup:  prueba-datos-20260926-075749
+
+Namespaces:
+  Included:  sa-p8
+  Excluded:  <none>
+
+Resources:
+  Included:        statefulsets, pods, persistentvolumeclaims, persistentvolumes
+  Excluded:        nodes, events, events.events.k8s.io, backups.velero.io, restores.velero.io, resticrepositories.velero.io, csinodes.storage.k8s.io, volumeattachments.storage.k8s.io, backuprepositories.velero.io
+  Cluster-scoped:  auto
+
+Namespace mappings:  <none>
+
+Label selector:  app.kubernetes.io/name=postgresql
+
+Or label selector:  <none>
+
+Restore PVs:  auto
+pod/postgres-0 condition met
+2026-09-26T08:03:21-0600 postgres-0 Ready con los datos restaurados
+2026-09-26T08:03:21-0600 Reanudando la sincronizacion automatica de ArgoCD
+[2026-09-26T08:03:22-0600] [1790431402] MARCA RESTAURACION_FIN
+[2026-09-26T08:03:22-0600] [1790431402] == 6. Verificacion del contenido
+[2026-09-26T08:03:39-0600] [1790431419] dr_marcas: 50 filas (antes 50), huella 1f784fd6ec120734a89751fb5ce5a04509a34e2a9430de4e1a4ec4680711bdc8 (antes 1f784fd6ec120734a89751fb5ce5a04509a34e2a9430de4e1a4ec4680711bdc8)
+[2026-09-26T08:03:39-0600] [1790431419] productos: 2 filas (antes 2)
+[2026-09-26T08:03:39-0600] [1790431419] filas 'despues-del-respaldo' presentes: 0 (esperado 0: escritas despues del respaldo)
+[2026-09-26T08:03:39-0600] [1790431419] OK: contenido restaurado identico al del momento del respaldo
+[2026-09-26T08:03:39-0600] [1790431419] == 7. Resultados
+[2026-09-26T08:03:39-0600] [1790431419] RPO medido (desastre - inicio del respaldo): 148 s -> se perdieron 5 filas escritas en esa ventana
+[2026-09-26T08:03:39-0600] [1790431419] Tiempo de restauracion de datos: 123 s
+[2026-09-26T08:03:39-0600] [1790431419] Con el Schedule horario, el RPO en el peor caso es ~60 min (desastre justo antes del siguiente respaldo).
+[2026-09-26T08:03:39-0600] [1790431419] MARCA PRUEBA_RESTAURACION_FIN
+[2026-09-26T08:03:39-0600] [1790431419] Registro: /home/estefaniamazariegos/Escritorio/2Semestre2026/SA/LAB/Pr-cticas-SA-B-202300547/P9/evidencias/restauracion-datos-20260926-075749.log

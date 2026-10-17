@@ -1,0 +1,218 @@
+[2026-10-17T07:35:08-0600] [1792244108] Estado previo:
+[2026-10-17T07:35:08-0600] [1792244108] $ kubectl get applications -n argocd
+NAME                  SYNC STATUS   HEALTH STATUS
+argo-rollouts         Synced        Healthy
+kyverno               Synced        Healthy
+politicas-kyverno     Synced        Healthy
+sa-p8                 Synced        Healthy
+sa-p9-root            Synced        Healthy
+sealed-secrets        Synced        Healthy
+velero                Synced        Healthy
+velero-credenciales   Synced        Healthy
+[2026-10-17T07:35:08-0600] [1792244108] $ velero backup get
+NAME                                    STATUS            ERRORS   WARNINGS   CREATED                         EXPIRES   STORAGE LOCATION   QUEUE POSITION   SELECTOR
+llave-pre-dr-20261017-0732              Completed         0        0          2026-10-17 07:32:47 -0600 CST   29d       default                             sealedsecrets.bitnami.com/sealed-secrets-key=active
+pre-reconstruccion-20261017-073327      Completed         0        0          2026-10-17 07:33:44 -0600 CST   6d        default                             <none>
+velero-sa-p8-cada-hora-20261017130054   Completed         0        0          2026-10-17 07:00:54 -0600 CST   6d        default                             <none>
+velero-sa-p8-cada-hora-20261017120154   Completed         0        0          2026-10-17 06:01:55 -0600 CST   6d        default                             <none>
+velero-sa-p8-cada-hora-20261017110040   Completed         0        0          2026-10-17 05:00:41 -0600 CST   6d        default                             <none>
+velero-sa-p8-cada-hora-20261017100013   PartiallyFailed   3        0          2026-10-17 04:00:13 -0600 CST   6d        default                             <none>
+velero-sa-p8-cada-hora-20261017090012   Completed         0        0          2026-10-17 03:00:13 -0600 CST   6d        default                             <none>
+velero-sa-p8-cada-hora-20261017080012   Completed         0        0          2026-10-17 02:00:13 -0600 CST   6d        default                             <none>
+velero-sa-p8-cada-hora-20261017070005   Completed         0        3          2026-10-17 01:00:05 -0600 CST   6d        default                             <none>
+velero-sa-p8-cada-hora-20261017060005   Completed         0        3          2026-10-17 00:00:05 -0600 CST   6d        default                             <none>
+velero-sa-p8-cada-hora-20261017050005   Completed         0        3          2026-10-16 23:00:05 -0600 CST   6d        default                             <none>
+velero-sa-p8-cada-hora-20261017040005   Completed         0        3          2026-10-16 22:00:05 -0600 CST   6d        default                             <none>
+velero-sa-p8-cada-hora-20261017030005   Completed         0        3          2026-10-16 21:00:05 -0600 CST   6d        default                             <none>
+velero-sa-p8-cada-hora-20261017020000   Completed         0        3          2026-10-16 20:00:01 -0600 CST   6d        default                             <none>
+velero-sa-p8-cada-hora-20261017010456   Completed         0        3          2026-10-16 19:04:56 -0600 CST   6d        default                             <none>
+velero-sa-p8-cada-hora-20261016230007   Completed         0        3          2026-10-16 17:00:07 -0600 CST   6d        default                             <none>
+velero-sa-p8-cada-hora-20261016220007   Completed         0        3          2026-10-16 16:00:07 -0600 CST   6d        default                             <none>
+velero-sa-p8-cada-hora-20261016210007   Completed         0        3          2026-10-16 15:00:07 -0600 CST   6d        default                             <none>
+velero-sa-p8-cada-hora-20261016200007   Completed         0        3          2026-10-16 14:00:07 -0600 CST   6d        default                             <none>
+velero-sa-p8-cada-hora-20261016190007   Completed         0        3          2026-10-16 13:00:07 -0600 CST   6d        default                             <none>
+velero-sa-p8-cada-hora-20261016180007   Completed         0        3          2026-10-16 12:00:07 -0600 CST   6d        default                             <none>
+velero-sa-p8-cada-hora-20261016170054   Completed         0        3          2026-10-16 11:00:55 -0600 CST   6d        default                             <none>
+velero-sa-p8-cada-hora-20261016160040   Completed         0        3          2026-10-16 10:00:40 -0600 CST   6d        default                             <none>
+velero-sa-p8-cada-hora-20261016150041   Completed         0        3          2026-10-16 09:00:41 -0600 CST   6d        default                             <none>
+velero-sa-p8-cada-hora-20261016140039   Completed         0        3          2026-10-16 08:00:39 -0600 CST   6d        default                             <none>
+velero-sa-p8-cada-hora-20261016134439   Completed         0        3          2026-10-16 07:44:39 -0600 CST   6d        default                             <none>
+velero-sa-p8-cada-hora-20261015230017   Completed         0        3          2026-10-15 17:00:17 -0600 CST   5d        default                             <none>
+velero-sa-p8-cada-hora-20261015220017   Completed         0        3          2026-10-15 16:00:17 -0600 CST   5d        default                             <none>
+velero-sa-p8-cada-hora-20261015210011   Completed         0        3          2026-10-15 15:00:11 -0600 CST   5d        default                             <none>
+velero-sa-p8-cada-hora-20261015200011   Completed         0        3          2026-10-15 14:00:11 -0600 CST   5d        default                             <none>
+velero-sa-p8-cada-hora-20261015190011   Completed         0        3          2026-10-15 13:00:11 -0600 CST   5d        default                             <none>
+velero-sa-p8-cada-hora-20261015182311   PartiallyFailed   3        3          2026-10-15 12:23:12 -0600 CST   5d        default                             <none>
+velero-sa-p8-cada-hora-20261015140059   Completed         0        3          2026-10-15 08:00:59 -0600 CST   5d        default                             <none>
+velero-sa-p8-cada-hora-20261015130059   Completed         0        3          2026-10-15 07:00:59 -0600 CST   4d        default                             <none>
+velero-sa-p8-cada-hora-20261015120059   Completed         0        3          2026-10-15 06:00:59 -0600 CST   4d        default                             <none>
+velero-sa-p8-cada-hora-20261015110059   Completed         0        3          2026-10-15 05:00:59 -0600 CST   4d        default                             <none>
+velero-sa-p8-cada-hora-20261015100059   Completed         0        3          2026-10-15 04:00:59 -0600 CST   4d        default                             <none>
+velero-sa-p8-cada-hora-20261015090059   Completed         0        3          2026-10-15 03:00:59 -0600 CST   4d        default                             <none>
+velero-sa-p8-cada-hora-20261015080059   Completed         0        3          2026-10-15 02:00:59 -0600 CST   4d        default                             <none>
+velero-sa-p8-cada-hora-20261015070059   Completed         0        3          2026-10-15 01:00:59 -0600 CST   4d        default                             <none>
+velero-sa-p8-cada-hora-20261015060059   Completed         0        3          2026-10-15 00:00:59 -0600 CST   4d        default                             <none>
+velero-sa-p8-cada-hora-20261015050059   Completed         0        3          2026-10-14 23:00:59 -0600 CST   4d        default                             <none>
+velero-sa-p8-cada-hora-20261015040059   Completed         0        3          2026-10-14 22:00:59 -0600 CST   4d        default                             <none>
+velero-sa-p8-cada-hora-20261015030025   Completed         0        3          2026-10-14 21:00:25 -0600 CST   4d        default                             <none>
+velero-sa-p8-cada-hora-20261015020025   Completed         0        3          2026-10-14 20:00:25 -0600 CST   4d        default                             <none>
+velero-sa-p8-cada-hora-20261015010025   Completed         0        3          2026-10-14 19:00:25 -0600 CST   4d        default                             <none>
+velero-sa-p8-cada-hora-20261015002524   Completed         0        3          2026-10-14 18:25:24 -0600 CST   4d        default                             <none>
+velero-sa-p8-cada-hora-20261014230030   Completed         0        3          2026-10-14 17:00:30 -0600 CST   4d        default                             <none>
+velero-sa-p8-cada-hora-20261014220030   Completed         0        3          2026-10-14 16:00:30 -0600 CST   4d        default                             <none>
+velero-sa-p8-cada-hora-20261014210030   Completed         0        3          2026-10-14 15:00:30 -0600 CST   4d        default                             <none>
+velero-sa-p8-cada-hora-20261014200007   Completed         0        3          2026-10-14 14:00:07 -0600 CST   4d        default                             <none>
+velero-sa-p8-cada-hora-20261014190007   Completed         0        3          2026-10-14 13:00:07 -0600 CST   4d        default                             <none>
+velero-sa-p8-cada-hora-20261014180007   Completed         0        3          2026-10-14 12:00:07 -0600 CST   4d        default                             <none>
+velero-sa-p8-cada-hora-20261014170807   Completed         0        3          2026-10-14 11:08:08 -0600 CST   4d        default                             <none>
+velero-sa-p8-cada-hora-20261014160022   Completed         0        3          2026-10-14 10:00:22 -0600 CST   4d        default                             <none>
+velero-sa-p8-cada-hora-20261014150922   Completed         0        3          2026-10-14 09:09:22 -0600 CST   4d        default                             <none>
+velero-sa-p8-cada-hora-20261014140051   Completed         0        3          2026-10-14 08:00:52 -0600 CST   4d        default                             <none>
+velero-sa-p8-cada-hora-20261014135552   PartiallyFailed   2        3          2026-10-14 07:55:53 -0600 CST   4d        default                             <none>
+velero-sa-p8-cada-hora-20261014090029   Completed         0        3          2026-10-14 03:00:29 -0600 CST   3d        default                             <none>
+velero-sa-p8-cada-hora-20261014080029   Completed         0        3          2026-10-14 02:00:29 -0600 CST   3d        default                             <none>
+velero-sa-p8-cada-hora-20261014070029   Completed         0        3          2026-10-14 01:00:29 -0600 CST   3d        default                             <none>
+velero-sa-p8-cada-hora-20261014060029   Completed         0        3          2026-10-14 00:00:29 -0600 CST   3d        default                             <none>
+velero-sa-p8-cada-hora-20261014050029   Completed         0        3          2026-10-13 23:00:29 -0600 CST   3d        default                             <none>
+velero-sa-p8-cada-hora-20261014040029   Completed         0        3          2026-10-13 22:00:29 -0600 CST   3d        default                             <none>
+velero-sa-p8-cada-hora-20261014030029   Completed         0        3          2026-10-13 21:00:29 -0600 CST   3d        default                             <none>
+velero-sa-p8-cada-hora-20261014020029   Completed         0        3          2026-10-13 20:00:30 -0600 CST   3d        default                             <none>
+velero-sa-p8-cada-hora-20261014010428   Completed         0        3          2026-10-13 19:04:29 -0600 CST   3d        default                             <none>
+velero-sa-p8-cada-hora-20261013230037   Completed         0        3          2026-10-13 17:00:38 -0600 CST   3d        default                             <none>
+velero-sa-p8-cada-hora-20261013220037   Completed         0        3          2026-10-13 16:00:37 -0600 CST   3d        default                             <none>
+velero-sa-p8-cada-hora-20261013210037   Completed         0        3          2026-10-13 15:00:37 -0600 CST   3d        default                             <none>
+velero-sa-p8-cada-hora-20261013200037   Completed         0        3          2026-10-13 14:00:37 -0600 CST   3d        default                             <none>
+velero-sa-p8-cada-hora-20261013190037   Completed         0        3          2026-10-13 13:00:37 -0600 CST   3d        default                             <none>
+velero-sa-p8-cada-hora-20261013180037   Completed         0        3          2026-10-13 12:00:37 -0600 CST   3d        default                             <none>
+velero-sa-p8-cada-hora-20261013170052   Completed         0        3          2026-10-13 11:00:52 -0600 CST   3d        default                             <none>
+velero-sa-p8-cada-hora-20261013160052   Completed         0        3          2026-10-13 10:00:52 -0600 CST   3d        default                             <none>
+velero-sa-p8-cada-hora-20261013150052   Completed         0        3          2026-10-13 09:00:52 -0600 CST   3d        default                             <none>
+velero-sa-p8-cada-hora-20261013140052   Completed         0        3          2026-10-13 08:00:52 -0600 CST   3d        default                             <none>
+velero-sa-p8-cada-hora-20261013135952   PartiallyFailed   3        3          2026-10-13 07:59:54 -0600 CST   3d        default                             <none>
+velero-sa-p8-cada-hora-20261013120017   Completed         0        3          2026-10-13 06:00:17 -0600 CST   2d        default                             <none>
+velero-sa-p8-cada-hora-20261013110017   Completed         0        3          2026-10-13 05:00:17 -0600 CST   2d        default                             <none>
+velero-sa-p8-cada-hora-20261013100017   Completed         0        3          2026-10-13 04:00:17 -0600 CST   2d        default                             <none>
+velero-sa-p8-cada-hora-20261013090016   Completed         0        3          2026-10-13 03:00:17 -0600 CST   2d        default                             <none>
+velero-sa-p8-cada-hora-20261013080016   Completed         0        3          2026-10-13 02:00:16 -0600 CST   2d        default                             <none>
+velero-sa-p8-cada-hora-20261013070016   Completed         0        3          2026-10-13 01:00:16 -0600 CST   2d        default                             <none>
+velero-sa-p8-cada-hora-20261013060016   Completed         0        3          2026-10-13 00:00:16 -0600 CST   2d        default                             <none>
+velero-sa-p8-cada-hora-20261013050016   Completed         0        3          2026-10-12 23:00:16 -0600 CST   2d        default                             <none>
+velero-sa-p8-cada-hora-20261013040016   Completed         0        3          2026-10-12 22:00:16 -0600 CST   2d        default                             <none>
+velero-sa-p8-cada-hora-20261013030016   Completed         0        3          2026-10-12 21:00:16 -0600 CST   2d        default                             <none>
+velero-sa-p8-cada-hora-20261013020004   Completed         0        4          2026-10-12 20:00:06 -0600 CST   2d        default                             <none>
+velero-sa-p8-cada-hora-20261013010003   Completed         0        3          2026-10-12 19:00:03 -0600 CST   2d        default                             <none>
+velero-sa-p8-cada-hora-20261013000600   Completed         0        3          2026-10-12 18:06:00 -0600 CST   2d        default                             <none>
+velero-sa-p8-cada-hora-20261012230028   Completed         0        3          2026-10-12 17:00:28 -0600 CST   2d        default                             <none>
+velero-sa-p8-cada-hora-20261012220028   Completed         0        3          2026-10-12 16:00:28 -0600 CST   2d        default                             <none>
+velero-sa-p8-cada-hora-20261012210028   Completed         0        3          2026-10-12 15:00:28 -0600 CST   2d        default                             <none>
+velero-sa-p8-cada-hora-20261012200015   Completed         0        3          2026-10-12 14:00:15 -0600 CST   2d        default                             <none>
+velero-sa-p8-cada-hora-20261012190015   Completed         0        3          2026-10-12 13:00:15 -0600 CST   2d        default                             <none>
+velero-sa-p8-cada-hora-20261012180015   Completed         0        3          2026-10-12 12:00:15 -0600 CST   2d        default                             <none>
+velero-sa-p8-cada-hora-20261012170015   Completed         0        3          2026-10-12 11:00:15 -0600 CST   2d        default                             <none>
+velero-sa-p8-cada-hora-20261012160009   Completed         0        3          2026-10-12 10:00:09 -0600 CST   2d        default                             <none>
+velero-sa-p8-cada-hora-20261012151110   Completed         0        3          2026-10-12 09:11:11 -0600 CST   2d        default                             <none>
+velero-sa-p8-cada-hora-20261012130050   Completed         0        3          2026-10-12 07:00:50 -0600 CST   1d        default                             <none>
+velero-sa-p8-cada-hora-20261012120050   Completed         0        3          2026-10-12 06:00:50 -0600 CST   1d        default                             <none>
+velero-sa-p8-cada-hora-20261012110050   Completed         0        3          2026-10-12 05:00:50 -0600 CST   1d        default                             <none>
+velero-sa-p8-cada-hora-20261012100050   Completed         0        3          2026-10-12 04:00:50 -0600 CST   1d        default                             <none>
+velero-sa-p8-cada-hora-20261012090050   Completed         0        3          2026-10-12 03:00:50 -0600 CST   1d        default                             <none>
+velero-sa-p8-cada-hora-20261012080050   Completed         0        3          2026-10-12 02:00:50 -0600 CST   1d        default                             <none>
+velero-sa-p8-cada-hora-20261012070050   Completed         0        3          2026-10-12 01:00:50 -0600 CST   1d        default                             <none>
+velero-sa-p8-cada-hora-20261012060050   Completed         0        3          2026-10-12 00:00:50 -0600 CST   1d        default                             <none>
+velero-sa-p8-cada-hora-20261012050050   Completed         0        3          2026-10-11 23:00:50 -0600 CST   1d        default                             <none>
+velero-sa-p8-cada-hora-20261012040050   Completed         0        3          2026-10-11 22:00:50 -0600 CST   1d        default                             <none>
+velero-sa-p8-cada-hora-20261012032349   Completed         0        3          2026-10-11 21:23:49 -0600 CST   1d        default                             <none>
+velero-sa-p8-cada-hora-20261012000018   Completed         0        3          2026-10-11 18:00:18 -0600 CST   1d        default                             <none>
+velero-sa-p8-cada-hora-20261011230018   Completed         0        3          2026-10-11 17:00:18 -0600 CST   1d        default                             <none>
+velero-sa-p8-cada-hora-20261011220518   Completed         0        3          2026-10-11 16:05:18 -0600 CST   1d        default                             <none>
+velero-sa-p8-cada-hora-20261011200027   Completed         0        3          2026-10-11 14:00:28 -0600 CST   1d        default                             <none>
+velero-sa-p8-cada-hora-20261011190027   Completed         0        3          2026-10-11 13:00:27 -0600 CST   1d        default                             <none>
+velero-sa-p8-cada-hora-20261011180027   Completed         0        3          2026-10-11 12:00:27 -0600 CST   1d        default                             <none>
+velero-sa-p8-cada-hora-20261011170027   Completed         0        3          2026-10-11 11:00:27 -0600 CST   1d        default                             <none>
+velero-sa-p8-cada-hora-20261011160027   Completed         0        3          2026-10-11 10:00:27 -0600 CST   1d        default                             <none>
+velero-sa-p8-cada-hora-20261011150027   Completed         0        3          2026-10-11 09:00:27 -0600 CST   1d        default                             <none>
+velero-sa-p8-cada-hora-20261011145027   Completed         0        3          2026-10-11 08:50:27 -0600 CST   1d        default                             <none>
+velero-sa-p8-cada-hora-20261011040020   Completed         0        3          2026-10-10 22:00:20 -0600 CST   14h       default                             <none>
+velero-sa-p8-cada-hora-20261011030022   Completed         0        3          2026-10-10 21:00:22 -0600 CST   13h       default                             <none>
+velero-sa-p8-cada-hora-20261011023422   Completed         0        3          2026-10-10 20:34:22 -0600 CST   12h       default                             <none>
+antes-del-respaldo|2026-09-26 13:58:11.136166+00
+antes-del-respaldo|2026-09-26 13:58:11.136166+00
+antes-del-respaldo|2026-09-26 13:58:11.136166+00
+antes-del-respaldo|2026-09-26 13:58:11.136166+00
+antes-del-respaldo|2026-09-26 13:58:11.136166+00
+antes-del-respaldo|2026-09-26 13:58:11.136166+00
+antes-del-respaldo|2026-09-26 13:58:11.136166+00
+antes-del-respaldo|2026-09-26 13:58:11.136166+00
+antes-del-respaldo|2026-09-26 13:58:11.136166+00
+antes-del-respaldo|2026-09-26 13:58:11.136166+00
+antes-del-respaldo|2026-09-26 13:58:11.136166+00
+antes-del-respaldo|2026-09-26 13:58:11.136166+00
+antes-del-respaldo|2026-09-26 13:58:11.136166+00
+antes-del-respaldo|2026-09-26 13:58:11.136166+00
+antes-del-respaldo|2026-09-26 13:58:11.136166+00
+antes-del-respaldo|2026-09-26 13:58:11.136166+00
+antes-del-respaldo|2026-09-26 13:58:11.136166+00
+antes-del-respaldo|2026-09-26 13:58:11.136166+00
+antes-del-respaldo|2026-09-26 13:58:11.136166+00
+antes-del-respaldo|2026-09-26 13:58:11.136166+00
+antes-del-respaldo|2026-09-26 13:58:11.136166+00
+antes-del-respaldo|2026-09-26 13:58:11.136166+00
+antes-del-respaldo|2026-09-26 13:58:11.136166+00
+antes-del-respaldo|2026-09-26 13:58:11.136166+00
+antes-del-respaldo|2026-09-26 13:58:11.136166+00
+antes-del-respaldo|2026-09-26 13:58:11.136166+00
+antes-del-respaldo|2026-09-26 13:58:11.136166+00
+antes-del-respaldo|2026-09-26 13:58:11.136166+00
+antes-del-respaldo|2026-09-26 13:58:11.136166+00
+antes-del-respaldo|2026-09-26 13:58:11.136166+00
+antes-del-respaldo|2026-09-26 13:58:11.136166+00
+antes-del-respaldo|2026-09-26 13:58:11.136166+00
+antes-del-respaldo|2026-09-26 13:58:11.136166+00
+antes-del-respaldo|2026-09-26 13:58:11.136166+00
+antes-del-respaldo|2026-09-26 13:58:11.136166+00
+antes-del-respaldo|2026-09-26 13:58:11.136166+00
+antes-del-respaldo|2026-09-26 13:58:11.136166+00
+antes-del-respaldo|2026-09-26 13:58:11.136166+00
+antes-del-respaldo|2026-09-26 13:58:11.136166+00
+antes-del-respaldo|2026-09-26 13:58:11.136166+00
+antes-del-respaldo|2026-09-26 13:58:11.136166+00
+antes-del-respaldo|2026-09-26 13:58:11.136166+00
+antes-del-respaldo|2026-09-26 13:58:11.136166+00
+antes-del-respaldo|2026-09-26 13:58:11.136166+00
+antes-del-respaldo|2026-09-26 13:58:11.136166+00
+antes-del-respaldo|2026-09-26 13:58:11.136166+00
+antes-del-respaldo|2026-09-26 13:58:11.136166+00
+antes-del-respaldo|2026-09-26 13:58:11.136166+00
+antes-del-respaldo|2026-09-26 13:58:11.136166+00
+antes-del-respaldo|2026-09-26 13:58:11.136166+00
+pre-reconstruccion|2026-10-17 13:33:33.577524+00
+pre-reconstruccion|2026-10-17 13:33:33.577524+00
+pre-reconstruccion|2026-10-17 13:33:33.577524+00
+pre-reconstruccion|2026-10-17 13:33:33.577524+00
+pre-reconstruccion|2026-10-17 13:33:33.577524+00
+pre-reconstruccion|2026-10-17 13:33:33.577524+00
+pre-reconstruccion|2026-10-17 13:33:33.577524+00
+pre-reconstruccion|2026-10-17 13:33:33.577524+00
+pre-reconstruccion|2026-10-17 13:33:33.577524+00
+pre-reconstruccion|2026-10-17 13:33:33.577524+00
+pre-reconstruccion|2026-10-17 13:33:33.577524+00
+pre-reconstruccion|2026-10-17 13:33:33.577524+00
+pre-reconstruccion|2026-10-17 13:33:33.577524+00
+pre-reconstruccion|2026-10-17 13:33:33.577524+00
+pre-reconstruccion|2026-10-17 13:33:33.577524+00
+pre-reconstruccion|2026-10-17 13:33:33.577524+00
+pre-reconstruccion|2026-10-17 13:33:33.577524+00
+pre-reconstruccion|2026-10-17 13:33:33.577524+00
+pre-reconstruccion|2026-10-17 13:33:33.577524+00
+pre-reconstruccion|2026-10-17 13:33:33.577524+00
+post-respaldo|2026-10-17 13:35:03.501467+00
+post-respaldo|2026-10-17 13:35:03.501467+00
+post-respaldo|2026-10-17 13:35:03.501467+00
+post-respaldo|2026-10-17 13:35:03.501467+00
+post-respaldo|2026-10-17 13:35:03.501467+00
+[2026-10-17T07:35:10-0600] [1792244110] MARCA DESTRUCCION_INICIO
+[2026-10-17T07:35:10-0600] [1792244110] $ kind delete cluster --name sa-p9
+Deleting cluster "sa-p9" ...
+Deleted nodes: ["sa-p9-control-plane" "sa-p9-worker2" "sa-p9-worker"]
+[2026-10-17T07:35:20-0600] [1792244120] MARCA DESTRUCCION_FIN
+[2026-10-17T07:35:20-0600] [1792244120] Cluster 'sa-p9', llave local y kubeconfig eliminados. Para reconstruir: ./P9/bootstrap.sh

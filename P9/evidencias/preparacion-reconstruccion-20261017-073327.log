@@ -1,0 +1,17 @@
+[2026-10-17T07:33:27-0600] [1792244007] MARCA PREPARACION_INICIO
+CREATE TABLE
+INSERT 0 20
+[2026-10-17T07:33:41-0600] [1792244021] Referencia: dr_marcas=70 filas, huella 08584b8b7336d9c81659a5ac9d4f28a6f1e0b622b3f79e09fced24e0193019ad
+[2026-10-17T07:33:44-0600] [1792244024] Por etapa: antes-del-respaldo=50 pre-reconstruccion=20 
+[2026-10-17T07:33:44-0600] [1792244024] $ velero backup create pre-reconstruccion-20261017-073327 --from-schedule velero-sa-p8-cada-hora --wait
+time="2026-10-17T07:33:44-06:00" level=info msg="No Schedule.template.metadata.labels set - using Schedule.labels for backup object" backup=velero/pre-reconstruccion-20261017-073327 labels="map[app.kubernetes.io/instance:velero app.kubernetes.io/managed-by:Helm app.kubernetes.io/name:velero app.kubernetes.io/version:1.18.2 helm.sh/chart:velero-12.2.0]"
+Creating backup from schedule, all other filters are ignored.
+Backup request "pre-reconstruccion-20261017-073327" submitted successfully.
+Waiting for backup to complete. You may safely press ctrl-c to stop waiting - your backup will continue in the background.
+..............................................................
+Backup completed with status: Completed. You may check for more information using the commands `velero backup describe pre-reconstruccion-20261017-073327` and `velero backup logs pre-reconstruccion-20261017-073327`.
+[2026-10-17T07:34:46-0600] [1792244086] Respaldo pre-reconstruccion-20261017-073327 -> Completed (inicio 2026-10-17T13:33:44Z, epoch 1792244024)
+INSERT 0 5
+[2026-10-17T07:35:05-0600] [1792244105] Escritas 5 filas post-respaldo (deben perderse). Total ahora: 75
+[2026-10-17T07:35:05-0600] [1792244105] MARCA PREPARACION_FIN
+[2026-10-17T07:35:05-0600] [1792244105] Siguiente paso: ./P9/scripts/destruir.sh && ./P9/bootstrap.sh

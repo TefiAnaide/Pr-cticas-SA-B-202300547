@@ -12,10 +12,12 @@
 #   4. ArgoCD (app-of-apps, carpeta apps/ del repo GitOps) levanta por olas:
 #      sealed-secrets -> argo-rollouts, kyverno -> credenciales de velero ->
 #      velero (+Schedule), politicas -> plataforma sa-p8.
-#   5. Si existe un respaldo de Velero previo, restaura los datos de Postgres.
+#   5. Si el cluster es NUEVO y existe un respaldo de Velero previo,
+#      restaura los datos de Postgres.
 #   6. Verifica (apps, secretos descifrados, datos, health) e imprime el RTO.
 #
-# Idempotente: correrlo sobre un sistema sano no rompe nada.
+# Idempotente: correrlo sobre un sistema sano no rompe nada (sobre un
+# cluster que ya existia NO restaura datos: conserva los actuales).
 # Todo queda registrado con marcas de tiempo en P9/evidencias/.
 # =============================================================================
 set -uo pipefail
@@ -68,7 +70,9 @@ run terraform init -input=false -reconfigure || falla "terraform init"
 # "terraform destroy"), el estado todavia lista recursos que vivian DENTRO
 # del cluster perdido. Refrescarlos contra un API server que ya no existe
 # falla, asi que se retiran del estado: la verdad es que ya no existen.
+CLUSTER_NUEVO=0
 if ! docker inspect "${CLUSTER}-control-plane" >/dev/null 2>&1; then
+  CLUSTER_NUEVO=1
   mapfile -t HUERFANOS < <(terraform state list 2>/dev/null)
   if [ "${#HUERFANOS[@]}" -gt 0 ]; then
     log "Cluster ausente pero el estado lista ${#HUERFANOS[@]} recursos: se retiran del estado"
@@ -108,11 +112,18 @@ ULTIMO=$(kubectl get backups.velero.io -n velero -o json 2>/dev/null | jq -r --a
             | select((.spec.includedNamespaces // []) | index($ns))
             | select((.status.startTimestamp | fromdateiso8601) < $t0)]
   | sort_by(.status.startTimestamp) | last | .metadata.name // empty')
-if [ -n "$ULTIMO" ]; then
+# Solo se restaura sobre un cluster RECIEN CREADO. Sobre un cluster que ya
+# existia, la base actual es mas nueva que cualquier respaldo: restaurar
+# borraria lo escrito desde entonces. Para forzarlo (p. ej. tras una
+# corrupcion de datos), usar scripts/restaurar-datos.sh o FORZAR_RESTAURACION=1.
+if [ "$CLUSTER_NUEVO" = 0 ] && [ "${FORZAR_RESTAURACION:-0}" != 1 ]; then
+  log "Cluster preexistente: se conservan los datos actuales (no se restaura${ULTIMO:+; ultimo respaldo disponible: $ULTIMO})"
+elif [ -n "$ULTIMO" ]; then
   log "Ultimo respaldo valido: $ULTIMO ($(kubectl get backups.velero.io "$ULTIMO" -n velero -o jsonpath='{.status.startTimestamp}'))"
   marca "RESTAURACION_DATOS_INICIO"
   "$P9_DIR/scripts/restaurar-datos.sh" "$ULTIMO" 2>&1 | tee -a "$LOG" || falla "restauracion de datos"
   marca "RESTAURACION_DATOS_FIN"
+  RESTAURADO=1
 else
   log "AVISO: no existe respaldo previo -> base de datos nueva (primer arranque)"
 fi
@@ -128,13 +139,28 @@ asegurar_sondeo
 if H=$(gateway_health); then log "OK: api-gateway /health -> $H"; else log "FALLA: api-gateway no responde"; fi
 MARCAS=$(psql_pg productos_db "SELECT count(*) FROM dr_marcas" 2>/dev/null || echo "sin tabla")
 log "Filas en productos_db.dr_marcas: $MARCAS"
+# Si antes se corrio scripts/preparar-reconstruccion.sh: comparar contenido
+# real (huella sha256) contra la referencia y contar lo perdido (RPO).
+if [ "${RESTAURADO:-0}" = 1 ] && [ -f "$SA_P9_HOME/ultima-preparacion" ]; then
+  read -r P_BK P_TBK P_N P_H < "$SA_P9_HOME/ultima-preparacion"
+  HUELLA=$(psql_pg productos_db "SELECT encode(sha256(convert_to(string_agg(id::text || etapa || dato || creado::text, ',' ORDER BY id), 'UTF8')), 'hex') FROM dr_marcas" 2>/dev/null)
+  POST=$(psql_pg productos_db "SELECT count(*) FROM dr_marcas WHERE etapa='post-respaldo'" 2>/dev/null)
+  log "Referencia ($P_BK): $P_N filas, huella $P_H"
+  log "Restaurado:          $MARCAS filas, huella $HUELLA"
+  [ "$HUELLA" = "$P_H" ] && log "OK: contenido restaurado identico al del ultimo respaldo" \
+                         || log "FALLA: el contenido restaurado NO coincide con la referencia"
+  if [ -f "$SA_P9_HOME/ultima-destruccion" ]; then
+    TD=$(cut -d' ' -f1 "$SA_P9_HOME/ultima-destruccion")
+    log "RPO MEDIDO (destruccion - inicio del ultimo respaldo): $((TD - P_TBK)) s; filas post-respaldo recuperadas: ${POST:-?} de 5 (se esperaban 0)"
+  fi
+fi
 run kubectl get pods -n "$APP_NS" -o wide
 run velero schedule get
 
 TFIN=$(date +%s)
 marca "FIN_BOOTSTRAP"
 log "Duracion del bootstrap: $((TFIN - T0)) s"
-if [ -f "$SA_P9_HOME/ultima-destruccion" ]; then
+if [ "$CLUSTER_NUEVO" = 1 ] && [ -f "$SA_P9_HOME/ultima-destruccion" ]; then
   TD=$(cut -d' ' -f1 "$SA_P9_HOME/ultima-destruccion")
   if [ "$TD" -lt "$T0" ]; then
     log "RTO MEDIDO (destruccion -> servicio restaurado y verificado): $((TFIN - TD)) s = $(( (TFIN - TD) / 60 )) min $(( (TFIN - TD) % 60 )) s"

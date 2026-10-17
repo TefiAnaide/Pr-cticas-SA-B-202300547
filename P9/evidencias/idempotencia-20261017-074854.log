@@ -1,0 +1,138 @@
+[2026-10-17T07:48:54-0600] [1792244934] MARCA INICIO_BOOTSTRAP
+[2026-10-17T07:48:54-0600] [1792244934] Ultima destruccion registrada: 1792244110 2026-10-17T07:35:10-0600 (2026-10-17 07:35:10)
+[2026-10-17T07:48:54-0600] [1792244934] == 0. Herramientas
+Terraform v1.16.4
+[2026-10-17T07:48:54-0600] [1792244934] == 1. Almacenamiento externo (MinIO, fuera del cluster)
+[2026-10-17T07:48:54-0600] [1792244934] $ docker compose -f /home/estefaniamazariegos/Escritorio/2Semestre2026/SA/LAB/Pr-cticas-SA-B-202300547/P9/minio/docker-compose.yml up -d
+ Container sa-p9-minio Running 
+[2026-10-17T07:48:55-0600] [1792244935] Listo: MinIO responde (1s)
+[2026-10-17T07:49:08-0600] [1792244948] == 2. Llave de Sealed Secrets
+[2026-10-17T07:49:08-0600] [1792244948] Llave presente localmente: sealed-secrets-keyngnbl.crt sealed-secrets-keyngnbl.key 
+[2026-10-17T07:49:08-0600] [1792244948] == 3. Terraform: cluster + ArgoCD + aplicacion raiz
+[2026-10-17T07:49:08-0600] [1792244948] $ terraform init -input=false -reconfigure
+[0m[1mInitializing the backend...[0m
+[0m[32m
+Successfully configured the backend "s3"! Terraform will automatically
+use this backend unless the backend configuration changes.[0m
+
+[0m[1mInitializing provider plugins...[0m
+- Reusing previous version of tehcyx/kind from the dependency lock file
+- Reusing previous version of hashicorp/kubernetes from the dependency lock file
+- Reusing previous version of hashicorp/helm from the dependency lock file
+- Using previously-installed tehcyx/kind v0.11.0
+- Using previously-installed hashicorp/kubernetes v2.38.0
+- Using previously-installed hashicorp/helm v3.3.0
+
+[0m[1m[32mTerraform has been successfully initialized![0m[32m[0m
+[0m[32m
+You may now begin working with Terraform. Try running "terraform plan" to see
+any changes that are required for your infrastructure. All Terraform commands
+should now work.
+
+If you ever set or change modules or backend configuration for Terraform,
+rerun this command to reinitialize your working directory. If you forget, other
+commands will detect it and remind you to do so if necessary.[0m
+[2026-10-17T07:49:13-0600] [1792244953] MARCA TERRAFORM_APPLY_INICIO
+[2026-10-17T07:49:13-0600] [1792244953] $ terraform apply -input=false -auto-approve
+[0m[1mkind_cluster.this: Refreshing state... [id=sa-p9-kindest/node:v1.34.11@sha256:44e222ee2132dab25ff87301682f89eb82c7880ea3a1bf543bfe9708fd08d67d][0m
+[0m[1mhelm_release.argocd: Refreshing state... [id=argocd][0m
+[0m[1mkubernetes_namespace.app: Refreshing state... [id=sa-p8][0m
+[0m[1mkubernetes_storage_class_v1.respaldable: Refreshing state... [id=local-respaldable][0m
+[0m[1mkubernetes_secret_v1.sealed_secrets_key["sealed-secrets-keyngnbl"]: Refreshing state... [id=kube-system/sealed-secrets-keyngnbl][0m
+[0m[1mkubernetes_role.service["auth-service"]: Refreshing state... [id=sa-p8/auth-service][0m
+[0m[1mkubernetes_service_account.service["auth-service"]: Refreshing state... [id=sa-p8/auth-service][0m
+[0m[1mkubernetes_limit_range.app: Refreshing state... [id=sa-p8/sa-p8-limits][0m
+[0m[1mkubernetes_role.service["reportes-service"]: Refreshing state... [id=sa-p8/reportes-service][0m
+[0m[1mkubernetes_role.service["productos-service"]: Refreshing state... [id=sa-p8/productos-service][0m
+[0m[1mkubernetes_role.service["authz-service"]: Refreshing state... [id=sa-p8/authz-service][0m
+[0m[1mkubernetes_role.service["api-gateway"]: Refreshing state... [id=sa-p8/api-gateway][0m
+[0m[1mkubernetes_role.service["pedidos-service"]: Refreshing state... [id=sa-p8/pedidos-service][0m
+[0m[1mkubernetes_service_account.service["api-gateway"]: Refreshing state... [id=sa-p8/api-gateway][0m
+[0m[1mkubernetes_service_account.service["authz-service"]: Refreshing state... [id=sa-p8/authz-service][0m
+[0m[1mkubernetes_service_account.service["pedidos-service"]: Refreshing state... [id=sa-p8/pedidos-service][0m
+[0m[1mkubernetes_resource_quota.app: Refreshing state... [id=sa-p8/sa-p8-quota][0m
+[0m[1mkubernetes_service_account.service["productos-service"]: Refreshing state... [id=sa-p8/productos-service][0m
+[0m[1mkubernetes_service_account.service["reportes-service"]: Refreshing state... [id=sa-p8/reportes-service][0m
+[0m[1mkubernetes_role_binding.service["api-gateway"]: Refreshing state... [id=sa-p8/api-gateway][0m
+[0m[1mkubernetes_role_binding.service["authz-service"]: Refreshing state... [id=sa-p8/authz-service][0m
+[0m[1mkubernetes_role_binding.service["reportes-service"]: Refreshing state... [id=sa-p8/reportes-service][0m
+[0m[1mkubernetes_role_binding.service["auth-service"]: Refreshing state... [id=sa-p8/auth-service][0m
+[0m[1mkubernetes_role_binding.service["productos-service"]: Refreshing state... [id=sa-p8/productos-service][0m
+[0m[1mkubernetes_role_binding.service["pedidos-service"]: Refreshing state... [id=sa-p8/pedidos-service][0m
+[0m[1mhelm_release.root_app: Refreshing state... [id=sa-p9-root][0m
+
+[0m[1m[32mNo changes.[0m[1m Your infrastructure matches the configuration.[0m
+
+[0mTerraform has compared your real infrastructure against your configuration
+and found no differences, so no changes are needed.
+[0m[1m[32m
+Apply complete! Resources: 0 added, 0 changed, 0 destroyed.[0m
+[0m[1m[32m
+Outputs:
+
+[0maplicacion_raiz = "sa-p9-root (namespace argocd)"
+cluster_endpoint = "https://127.0.0.1:46417"
+kubeconfig_path = "/home/estefaniamazariegos/.kube/sa-p9.config"
+sealed_secrets_keys_restauradas = tolist([
+  "sealed-secrets-keyngnbl",
+])
+[2026-10-17T07:49:41-0600] [1792244981] MARCA TERRAFORM_APPLY_FIN
+[2026-10-17T07:49:41-0600] [1792244981] == 4. ArgoCD sincroniza el resto (app-of-apps)
+[2026-10-17T07:49:41-0600] [1792244981] Listo: aplicacion raiz sa-p9-root creada (0s)
+[2026-10-17T07:49:42-0600] [1792244982] Listo: todas las Applications Synced/Healthy (1s)
+[2026-10-17T07:49:42-0600] [1792244982] $ kubectl get applications -n argocd
+NAME                  SYNC STATUS   HEALTH STATUS
+argo-rollouts         Synced        Healthy
+kyverno               Synced        Healthy
+politicas-kyverno     Synced        Healthy
+sa-p8                 Synced        Healthy
+sa-p9-root            Synced        Healthy
+sealed-secrets        Synced        Healthy
+velero                Synced        Healthy
+velero-credenciales   Synced        Healthy
+[2026-10-17T07:49:42-0600] [1792244982] MARCA ARGOCD_CONVERGIO
+[2026-10-17T07:49:42-0600] [1792244982] == 5. Respaldo de la llave de Sealed Secrets (idempotente)
+2026-10-17T07:49:44-0600 Llaves respaldadas (1): sealed-secrets-keyngnbl.crt sealed-secrets-keyngnbl.key -> s3://sa-p9-llaves/sealed-secrets/
+[2026-10-17T07:49:44-0600] [1792244984] == 6. Restauracion de datos desde el ultimo respaldo de Velero
+[2026-10-17T07:49:44-0600] [1792244984] Listo: BackupStorageLocation Available (0s)
+[2026-10-17T07:49:44-0600] [1792244984] Listo: respaldos sincronizados desde MinIO (0s)
+[2026-10-17T07:49:45-0600] [1792244985] Cluster preexistente: se conservan los datos actuales (no se restaura; ultimo respaldo disponible: pre-reconstruccion-20261017-073327)
+[2026-10-17T07:49:45-0600] [1792244985] == 7. Verificacion final
+[2026-10-17T07:49:45-0600] [1792244985] Listo: todas las Applications Synced/Healthy (0s)
+[2026-10-17T07:49:45-0600] [1792244985] $ kubectl get sealedsecrets -A
+NAMESPACE   NAME                   STATUS   SYNCED   AGE
+sa-p8       auth-service-secrets            True     6m36s
+sa-p8       postgres                        True     6m36s
+sa-p8       rabbitmq                        True     6m36s
+sa-p8       sa-p5-shared-secrets            True     6m36s
+velero      velero-credentials              True     8m21s
+[2026-10-17T07:49:45-0600] [1792244985] OK: todos los SealedSecrets descifrados con la llave restaurada
+[2026-10-17T07:49:45-0600] [1792244985] OK: api-gateway /health -> {"status":"ok","service":"api-gateway"}
+[2026-10-17T07:49:47-0600] [1792244987] Filas en productos_db.dr_marcas: 71
+[2026-10-17T07:49:47-0600] [1792244987] $ kubectl get pods -n sa-p8 -o wide
+NAME                                                READY   STATUS      RESTARTS        AGE     IP            NODE            NOMINATED NODE   READINESS GATES
+api-gateway-867fd669c7-blhqq                        1/1     Running     0               6m38s   10.244.2.15   sa-p9-worker2   <none>           <none>
+api-gateway-867fd669c7-h22q2                        1/1     Running     0               6m38s   10.244.1.16   sa-p9-worker    <none>           <none>
+auth-service-84d87b8c4b-jc798                       1/1     Running     2 (4m15s ago)   6m41s   10.244.2.8    sa-p9-worker2   <none>           <none>
+auth-service-84d87b8c4b-kvntp                       1/1     Running     1 (4m55s ago)   6m41s   10.244.1.12   sa-p9-worker    <none>           <none>
+authz-service-6495d47497-5ldft                      1/1     Running     0               6m41s   10.244.1.14   sa-p9-worker    <none>           <none>
+authz-service-6495d47497-kmr59                      1/1     Running     0               6m41s   10.244.2.9    sa-p9-worker2   <none>           <none>
+pedidos-service-78646789dc-zddfr                    1/1     Running     0               6m40s   10.244.1.13   sa-p9-worker    <none>           <none>
+pedidos-service-78646789dc-zl56n                    1/1     Running     0               6m40s   10.244.2.13   sa-p9-worker2   <none>           <none>
+postgres-0                                          1/1     Running     0               3m10s   10.244.1.22   sa-p9-worker    <none>           <none>
+productos-service-6789c45697-8ztm2                  1/1     Running     0               6m40s   10.244.2.11   sa-p9-worker2   <none>           <none>
+productos-service-6789c45697-xqc7s                  1/1     Running     1 (4m28s ago)   6m41s   10.244.1.11   sa-p9-worker    <none>           <none>
+rabbitmq-0                                          1/1     Running     0               6m40s   10.244.2.16   sa-p9-worker2   <none>           <none>
+reportes-service-59b98ffb8-2b6m7                    1/1     Running     0               6m41s   10.244.2.10   sa-p9-worker2   <none>           <none>
+reportes-service-59b98ffb8-wndfv                    1/1     Running     0               6m41s   10.244.1.10   sa-p9-worker    <none>           <none>
+reportes-service-consumer-99c876d9c-jz4nl           1/1     Running     3 (2m29s ago)   6m41s   10.244.2.12   sa-p9-worker2   <none>           <none>
+reportes-service-cronjob-heartbeat-29870744-tqw4c   0/1     Completed   0               5m47s   10.244.1.18   sa-p9-worker    <none>           <none>
+reportes-service-cronjob-heartbeat-29870746-mhwkc   0/1     Completed   1               3m47s   10.244.1.19   sa-p9-worker    <none>           <none>
+reportes-service-cronjob-heartbeat-29870748-h7vbs   0/1     Completed   0               107s    10.244.1.26   sa-p9-worker    <none>           <none>
+[2026-10-17T07:49:47-0600] [1792244987] $ velero schedule get
+NAME                          STATUS    CREATED                         SCHEDULE       BACKUP TTL   LAST BACKUP   SELECTOR                                              PAUSED
+velero-sa-p8-cada-hora        Enabled   2026-10-17 07:41:35 -0600 CST   0 * * * *      168h0m0s     n/a           <none>                                                false
+velero-sealed-secrets-llave   Enabled   2026-10-17 07:41:35 -0600 CST   30 */6 * * *   720h0m0s     n/a           sealedsecrets.bitnami.com/sealed-secrets-key=active   false
+[2026-10-17T07:49:47-0600] [1792244987] MARCA FIN_BOOTSTRAP
+[2026-10-17T07:49:47-0600] [1792244987] Duracion del bootstrap: 53 s
+[2026-10-17T07:49:47-0600] [1792244987] Registro: /home/estefaniamazariegos/Escritorio/2Semestre2026/SA/LAB/Pr-cticas-SA-B-202300547/P9/evidencias/reconstruccion-20261017-074854.log

@@ -1,0 +1,7 @@
+# Estado de Terraform: nunca en el repositorio (P9, criterio 2.2)
+*.tfstate
+*.tfstate.*
+**/.terraform/
+
+# Salidas locales de los scripts de verificacion
+reporte_p*_*.txt

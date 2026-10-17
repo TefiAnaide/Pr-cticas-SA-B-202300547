@@ -1,0 +1,130 @@
+[2026-10-17T07:49:50-0600] [1792244990] MARCA PRUEBA_NODO_INICIO
+[2026-10-17T07:49:50-0600] [1792244990] == Distribucion inicial
+[2026-10-17T07:49:50-0600] [1792244990] $ kubectl get pods -n sa-p8 -l app.kubernetes.io/name=api-gateway -o wide
+NAME                           READY   STATUS    RESTARTS   AGE     IP            NODE            NOMINATED NODE   READINESS GATES
+api-gateway-867fd669c7-blhqq   1/1     Running   0          6m42s   10.244.2.15   sa-p9-worker2   <none>           <none>
+api-gateway-867fd669c7-h22q2   1/1     Running   0          6m42s   10.244.1.16   sa-p9-worker    <none>           <none>
+[2026-10-17T07:49:51-0600] [1792244991] $ kubectl get pdb -n sa-p8
+NAME                      MIN AVAILABLE   MAX UNAVAILABLE   ALLOWED DISRUPTIONS   AGE
+api-gateway               1               N/A               1                     6m48s
+auth-service              1               N/A               1                     6m48s
+authz-service             1               N/A               1                     6m48s
+pedidos-service           1               N/A               1                     6m48s
+postgres                  N/A             1                 1                     6m48s
+productos-service         1               N/A               1                     6m48s
+rabbitmq                  N/A             1                 1                     6m48s
+reportes-service-server   1               N/A               1                     6m48s
+[2026-10-17T07:49:51-0600] [1792244991] Nodo a drenar: sa-p9-worker2 (postgres-0 esta en sa-p9-worker)
+[2026-10-17T07:49:51-0600] [1792244991] == Sondeo continuo de /health (1/s)
+[2026-10-17T07:50:01-0600] [1792245001] MARCA DRENAJE_INICIO sa-p9-worker2
+[2026-10-17T07:50:01-0600] [1792245001] $ kubectl drain sa-p9-worker2 --ignore-daemonsets --delete-emptydir-data --timeout=240s
+node/sa-p9-worker2 cordoned
+Warning: ignoring DaemonSet-managed Pods: kube-system/kindnet-lkcqg, kube-system/kube-proxy-vbgqt, velero/node-agent-6j7sw
+evicting pod sa-p8/reportes-service-consumer-99c876d9c-jz4nl
+evicting pod argo-rollouts/argo-rollouts-64945b6584-vrrmk
+evicting pod argocd/argocd-application-controller-0
+evicting pod sa-p8/authz-service-6495d47497-kmr59
+evicting pod kyverno/kyverno-background-controller-659fcf7855-vcmzl
+evicting pod sa-p8/pedidos-service-78646789dc-zl56n
+evicting pod sa-p8/api-gateway-867fd669c7-blhqq
+evicting pod sa-p8/rabbitmq-0
+evicting pod sa-p8/auth-service-84d87b8c4b-jc798
+evicting pod kyverno/kyverno-admission-controller-6c94986f99-t6zw4
+evicting pod argocd/argocd-server-789b775dd9-hk7z2
+evicting pod sa-p8/reportes-service-59b98ffb8-2b6m7
+evicting pod sa-p8/productos-service-6789c45697-8ztm2
+I1017 07:50:04.399375  203820 request.go:754] "Waited before sending request" delay="1.152303754s" reason="client-side throttling, not priority and fairness" verb="GET" URL="https://127.0.0.1:46417/api/v1/namespaces/sa-p8/pods/reportes-service-consumer-99c876d9c-jz4nl"
+pod/kyverno-admission-controller-6c94986f99-t6zw4 evicted
+pod/pedidos-service-78646789dc-zl56n evicted
+pod/reportes-service-59b98ffb8-2b6m7 evicted
+pod/productos-service-6789c45697-8ztm2 evicted
+pod/argocd-application-controller-0 evicted
+pod/kyverno-background-controller-659fcf7855-vcmzl evicted
+pod/argocd-server-789b775dd9-hk7z2 evicted
+pod/argo-rollouts-64945b6584-vrrmk evicted
+pod/auth-service-84d87b8c4b-jc798 evicted
+pod/authz-service-6495d47497-kmr59 evicted
+pod/api-gateway-867fd669c7-blhqq evicted
+pod/reportes-service-consumer-99c876d9c-jz4nl evicted
+pod/rabbitmq-0 evicted
+node/sa-p9-worker2 drained
+[2026-10-17T07:50:44-0600] [1792245044] MARCA DRENAJE_FIN sa-p9-worker2
+[2026-10-17T07:50:44-0600] [1792245044] $ kubectl get pods -n sa-p8 -l app.kubernetes.io/name=api-gateway -o wide
+NAME                           READY   STATUS    RESTARTS   AGE     IP            NODE           NOMINATED NODE   READINESS GATES
+api-gateway-867fd669c7-h22q2   1/1     Running   0          7m35s   10.244.1.16   sa-p9-worker   <none>           <none>
+api-gateway-867fd669c7-prq82   1/1     Running   0          42s     10.244.1.32   sa-p9-worker   <none>           <none>
+[2026-10-17T07:51:04-0600] [1792245064] MARCA NODO_RESTAURADO sa-p9-worker2
+[2026-10-17T07:51:04-0600] [1792245064] $ kubectl uncordon sa-p9-worker2
+node/sa-p9-worker2 uncordoned
+07:49:51 1792244991 OK
+07:49:53 1792244993 OK
+07:49:54 1792244994 OK
+07:49:56 1792244996 OK
+07:49:57 1792244997 OK
+07:49:59 1792244999 OK
+07:50:01 1792245001 OK
+07:50:03 1792245003 OK
+07:50:06 1792245006 OK
+07:50:07 1792245007 OK
+07:50:09 1792245009 OK
+07:50:10 1792245010 OK
+07:50:12 1792245012 OK
+07:50:13 1792245013 OK
+07:50:14 1792245014 OK
+07:50:16 1792245016 OK
+07:50:17 1792245017 OK
+07:50:19 1792245019 OK
+07:50:20 1792245020 OK
+07:50:21 1792245021 OK
+07:50:23 1792245023 OK
+07:50:24 1792245024 OK
+07:50:26 1792245026 OK
+07:50:27 1792245027 OK
+07:50:29 1792245029 OK
+07:50:31 1792245031 OK
+07:50:32 1792245032 OK
+07:50:33 1792245033 OK
+07:50:35 1792245035 OK
+07:50:37 1792245037 OK
+07:50:38 1792245038 OK
+07:50:40 1792245040 OK
+07:50:41 1792245041 OK
+07:50:43 1792245043 OK
+07:50:44 1792245044 OK
+07:50:46 1792245046 OK
+07:50:47 1792245047 OK
+07:50:49 1792245049 OK
+07:50:50 1792245050 OK
+07:50:52 1792245052 OK
+07:50:53 1792245053 OK
+07:50:55 1792245055 OK
+07:50:56 1792245056 OK
+07:50:58 1792245058 OK
+07:50:59 1792245059 OK
+07:51:01 1792245061 OK
+07:51:02 1792245062 OK
+07:51:04 1792245064 OK
+[2026-10-17T07:51:04-0600] [1792245064] Peticiones: 48, fallidas: 0, disponibilidad: 100.00%
+[2026-10-17T07:51:04-0600] [1792245064] $ kubectl get pods -n sa-p8 -o wide
+NAME                                                READY   STATUS      RESTARTS        AGE     IP            NODE            NOMINATED NODE   READINESS GATES
+api-gateway-867fd669c7-h22q2                        1/1     Running     0               7m56s   10.244.1.16   sa-p9-worker    <none>           <none>
+api-gateway-867fd669c7-prq82                        1/1     Running     0               63s     10.244.1.32   sa-p9-worker    <none>           <none>
+auth-service-84d87b8c4b-kvntp                       1/1     Running     1 (6m13s ago)   7m59s   10.244.1.12   sa-p9-worker    <none>           <none>
+auth-service-84d87b8c4b-wh9w4                       1/1     Running     0               40s     10.244.1.39   sa-p9-worker    <none>           <none>
+authz-service-6495d47497-5ldft                      1/1     Running     0               7m59s   10.244.1.14   sa-p9-worker    <none>           <none>
+authz-service-6495d47497-wkshn                      1/1     Running     0               32s     10.244.1.40   sa-p9-worker    <none>           <none>
+pedidos-service-78646789dc-7vstp                    1/1     Running     0               59s     10.244.1.36   sa-p9-worker    <none>           <none>
+pedidos-service-78646789dc-zddfr                    1/1     Running     0               7m58s   10.244.1.13   sa-p9-worker    <none>           <none>
+postgres-0                                          1/1     Running     0               4m28s   10.244.1.22   sa-p9-worker    <none>           <none>
+productos-service-6789c45697-prwsd                  1/1     Running     0               58s     10.244.1.38   sa-p9-worker    <none>           <none>
+productos-service-6789c45697-xqc7s                  1/1     Running     1 (5m46s ago)   7m59s   10.244.1.11   sa-p9-worker    <none>           <none>
+rabbitmq-0                                          0/1     Init:0/1    0               22s     <none>        sa-p9-worker2   <none>           <none>
+reportes-service-59b98ffb8-wndfv                    1/1     Running     0               7m59s   10.244.1.10   sa-p9-worker    <none>           <none>
+reportes-service-59b98ffb8-zkdr7                    1/1     Running     0               59s     10.244.1.37   sa-p9-worker    <none>           <none>
+reportes-service-consumer-99c876d9c-2r7j8           1/1     Running     1 (24s ago)     63s     10.244.1.29   sa-p9-worker    <none>           <none>
+reportes-service-cronjob-heartbeat-29870746-mhwkc   0/1     Completed   1               5m5s    10.244.1.19   sa-p9-worker    <none>           <none>
+reportes-service-cronjob-heartbeat-29870748-h7vbs   0/1     Completed   0               3m5s    10.244.1.26   sa-p9-worker    <none>           <none>
+reportes-service-cronjob-heartbeat-29870750-k947w   0/1     Completed   0               65s     10.244.1.27   sa-p9-worker    <none>           <none>
+reportes-service-cronjob-resumen-29870750-cgfsm     0/1     Completed   0               65s     10.244.1.28   sa-p9-worker    <none>           <none>
+[2026-10-17T07:51:05-0600] [1792245065] MARCA PRUEBA_NODO_FIN
+[2026-10-17T07:51:05-0600] [1792245065] Registro: /home/estefaniamazariegos/Escritorio/2Semestre2026/SA/LAB/Pr-cticas-SA-B-202300547/P9/evidencias/perdida-nodo-20261017-074950.log

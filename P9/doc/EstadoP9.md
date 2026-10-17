@@ -7,16 +7,20 @@ tenga push no cuenta.
 
 ## Resumen
 
-| Criterio | Oficial (05:05) | `_corregido` (05:05) | `_corregido` tras el push `7d20576` | Esperado al cerrar pendientes |
+| Criterio | Oficial (05:05) | `_corregido` (05:05) | `_corregido` tras el push `7d20576` | `_corregido` tras la reconstrucción (07:55) |
 |---|---:|---:|---:|---:|
 | 2.1 Bootstrap automatizado | 14 / 14 | 14 / 14 | 14 / 14 | 14 / 14 |
 | 2.2 Estado remoto e IaC | 6 / 8 | 6 / 8 | **8 / 8** ✅ | 8 / 8 |
 | 2.3 Respaldo con Velero | **2 / 14** ⚠️ | 14 / 14 | 14 / 14 | 14 / 14 |
-| 2.4 Continuidad de secretos | 5 / 8 | 5 / 8 | 5 / 8 | **8 / 8** |
+| 2.4 Continuidad de secretos | 5 / 8 | 5 / 8 | 5 / 8 | **8 / 8** ✅ |
 | 2.5 Resiliencia ante fallo | 6 / 8 | 6 / 8 | 6 / 8 | 6 / 8 (decisión, ver abajo) |
-| 2.6 Restauración verificada | 5 / 8 | 5 / 8 | 5 / 8 | **8 / 8** |
+| 2.6 Restauración verificada | 5 / 8 | 5 / 8 | 5 / 8 | **8 / 8** ✅ |
 | **Conocimiento** | **38 / 60** | **50 / 60** | **52 / 60** | **58 / 60** |
-| Eliminatorios | `readme` `tfstate-en-repo` `sin-respaldo` | `readme` `tfstate-en-repo` | `readme` | ninguno |
+| Eliminatorios | `readme` `tfstate-en-repo` `sin-respaldo` | `readme` `tfstate-en-repo` | `readme` | `readme` → resuelto al subir `P9/README.md` |
+
+**Prueba de DR (2026-10-17):** RTO medido **12 min 41 s** (objetivo 30 min),
+RPO medido **86 s** (objetivo 60 min), 70/70 filas con huella idéntica, 0/5
+filas post-respaldo recuperadas (correcto). Detalle en [`InformeDR.md`](InformeDR.md).
 
 > ⚠️ La diferencia entre la primera y la segunda columna **no es un fallo de
 > la práctica**, sino un bug del verificador. Está explicado en la sección siguiente.
@@ -96,15 +100,16 @@ destino MinIO `Available` y File System Backup de volúmenes.
 
 | # | Qué | Puntos | Por qué | Estado |
 |---|---|---:|---|---|
-| 1 | **Falta `P9/README.md`** (eliminatorio `readme`) | — | No existía todavía. | Se escribe cuando estén los tiempos medidos de la reconstrucción. |
+| 1 | **Falta `P9/README.md`** (eliminatorio `readme`) | — | No existía todavía. | ✅ Escrito con la tabla 4.1 completa. **Falta push.** Solo queda pendiente la URL del video. |
 | 2 | **`P8/terraform/terraform.tfstate` versionado** (eliminatorio `tfstate-en-repo`) | 2.2: −2 | Se subió en el commit `b3f716d P8`. El verificador busca `*.tfstate*` en **todo** el repo, no solo en `/P9`. | ✅ Resuelto en `7d20576` (`git rm --cached`; el archivo sigue en disco). Falta subir el `.gitignore` de la raíz para que no vuelva a entrar. |
-| 3 | **El respaldo no cubre `kube-system`** | 2.4: −3 | El Schedule solo respalda `sa-p8`. La llave tenía respaldo (bucket `sa-p9-llaves`), pero el verificador exige un **Backup de Velero** que incluya el namespace de la llave. | ✅ Schedule `velero-sealed-secrets-llave` agregado en GitOps (commit `d0bb9f2`). **Falta push.** Al sincronizar corre de inmediato. |
-| 4 | **Ningún `Restore` en el clúster** | 2.6: −3 | El clúster actual se creó el 2026-09-27, después de las pruebas del 26. Los objetos `Restore` viven en el clúster, no en MinIO: se perdieron con él. | Se resuelve con la reconstrucción cronometrada (el bootstrap restaura y crea un `Restore`). |
+| 3 | **El respaldo no cubre `kube-system`** | 2.4: −3 | El Schedule solo respalda `sa-p8`. La llave tenía respaldo (bucket `sa-p9-llaves`), pero el verificador exige un **Backup de Velero** que incluya el namespace de la llave. | ✅ Schedule `velero-sealed-secrets-llave` en GitOps (`d0bb9f2`). No corre de inmediato al crearse, así que se lanzó `llave-pre-dr-20261017-0732` desde el Schedule; el clúster reconstruido lo sincronizó desde MinIO. 2.4 = 8/8. |
+| 4 | **Ningún `Restore` en el clúster** | 2.6: −3 | El clúster anterior se creó el 2026-09-27, después de las pruebas del 26. Los objetos `Restore` viven en el clúster, no en MinIO: se perdieron con él. | ✅ La reconstrucción creó `restaurar-pg-20261017-074604` (`Completed`). 2.6 = 8/8. |
 | 5 | **Postgres, RabbitMQ y `reportes-service-consumer` con 1 réplica** | 2.5: −2 | El verificador exige ≥ 2 réplicas en **toda** carga del namespace. Replicar Postgres implica `architecture: replication` en el chart, que renombra el pod y el PVC (`postgres-primary-0`) y rompe `restaurar-datos.sh`, la prueba de datos y la sonda. | **Decisión: no se cambia.** Se declara como punto único de fallo en el informe de DR (la rúbrica 1.2 premia identificarlo). Se pierden 2 pts. |
-| 6 | **No hay reconstrucción cronometrada** | 2.1 en la demo, 1.2 | No existe `evidencias/reconstruccion-*.log`: nunca se corrió `destruir.sh` + `bootstrap.sh` con el sistema completo. | Pendiente: requiere el push de GitOps primero. |
+| 6 | **No hay reconstrucción cronometrada** | 2.1 en la demo, 1.2 | No existía `evidencias/reconstruccion-*.log`: nunca se había corrido `destruir.sh` + `bootstrap.sh` con el sistema completo. | ✅ `reconstruccion-20261017-073520.log`: RTO 761 s, RPO 86 s, salió bien a la primera. |
+| 6b | **El bootstrap restauraba datos sobre un clúster sano** | ninguno directo; grave en operación | La fase 6 restauraba el último respaldo **siempre**, así que correrlo "por si acaso" borraba lo escrito desde entonces. Contradecía el "idempotente" del encabezado. | ✅ Solo restaura si el clúster es nuevo (`CLUSTER_NUEVO`) o con `FORZAR_RESTAURACION=1`. Probado en `idempotencia-20261017-074854.log`: una fila escrita después de la reconstrucción sobrevivió a la segunda corrida (53 s, `No changes`). |
 | 7 | **El contexto por defecto de kubectl está vacío** | todos (`sin-cluster`) | Terraform escribe el kubeconfig en `~/.kube/sa-p9.config`, no en `~/.kube/config`. El verificador usa el contexto actual. | Antes de calificar: `export KUBECONFIG=~/.kube/sa-p9.config` (anotado en `p9.conf`). |
 | 8 | **`postgres-0` quedó en `Unknown` tras reiniciar la máquina** | requisito 8.1 "sistema operativo" | Al reiniciar el host, kind recrea los nodos pero el pod no se reconcilia; los servicios que dependen de Postgres entran en CrashLoop. | ✅ Arreglado el 2026-10-17 borrando el pod (el PVC se conserva). Documentado en el runbook §6. **Revisar el día de la calificación.** |
-| 9 | **Réplicas amontonadas en `sa-p9-worker2`** | ninguno directo | La anti-afinidad es *preferida*: tras el drenaje del 26-09, las réplicas desalojadas fueron al otro worker y nunca volvieron. Hoy un drenaje de `worker2` sí cortaría el servicio. | Se corrige solo con la reconstrucción (pods nuevos se reparten). Si no, `kubectl rollout restart deploy -n sa-p8`. |
+| 9 | **Réplicas amontonadas en `sa-p9-worker2`** | ninguno directo | La anti-afinidad es *preferida*: tras el drenaje del 26-09, las réplicas desalojadas fueron al otro worker y nunca volvieron. Hoy un drenaje de `worker2` sí cortaría el servicio. | Volvió a pasar tras la prueba de nodo del 2026-10-17 (todo quedó en `sa-p9-worker`). Se repartió con `kubectl rollout restart deploy -n sa-p8` y `spec.restartAt` en el Rollout: 1 réplica por worker. Repetirlo después de cada drenaje. |
 | 10 | **`[AVISO] El bootstrap menciona pasos manuales`** | 0 | El grep encuentra la palabra "manual" en el comentario *"sin pasos **manual**es intermedios"*. Falso positivo. | No requiere cambio; explicarlo si lo preguntan. |
 
 ## Pruebas que fallaron antes y por qué (se conservan como evidencia)
@@ -116,15 +121,14 @@ destino MinIO `Available` y File System Backup de volúmenes.
 
 ## Pendientes, en orden
 
-- [ ] **Push del repo GitOps** (`d0bb9f2`): sin esto no hay respaldo de `kube-system` y la reconstrucción no lo incluye.
-- [x] Push del repo de código (`7d20576`): borrado del tfstate de P8, `bootstrap.sh`, `p9.conf`, `doc/`.
-- [ ] Commit del `.gitignore` de la raíz y de `verificar_p9_corregido.sh` / `verificar_p10_corregido.sh`.
-- [ ] Respaldo de referencia con filas marcadas → `destruir.sh` → `bootstrap.sh` (RTO real).
-- [ ] Prueba de pérdida de nodo sobre el clúster reconstruido (las réplicas quedan repartidas).
-- [ ] Informe de DR (`doc/InformeDR.md`) con los seis campos y los tiempos reales.
-- [ ] `P9/README.md` con la tabla 4.1 completa.
-- [ ] Preguntas teóricas (`doc/PreguntasTeoricas.md`) para preparar la defensa.
-- [ ] Video de 5 a 8 minutos y su minutaje en el README.
+- [x] Push del repo GitOps (`d0bb9f2`).
+- [x] Push del repo de código (`7d20576`, `fb1e4ba`).
+- [x] Respaldo de referencia → `destruir.sh` → `bootstrap.sh`: RTO 12 min 41 s.
+- [x] Prueba de pérdida de nodo sobre el clúster reconstruido: 0/48 fallidas.
+- [x] Prueba de idempotencia del bootstrap corregido.
+- [x] Informe de DR, README, preguntas teóricas.
+- [ ] **Commit y push** de: `.gitignore` (raíz), `P9/README.md`, `P9/bootstrap.sh`, `P9/scripts/preparar-reconstruccion.sh`, `P9/doc/*`, `P9/evidencias/*` (nuevos logs).
+- [ ] Video de 5 a 8 minutos; completar URL y minutaje en el README.
 - [x] Copias corregidas y documentadas de los verificadores (P9 y P10).
 - [ ] Avisar al auxiliar que se usa `verificar_p9_corregido.sh` y por qué.
 - [ ] El día de la calificación: encender MinIO y el clúster, revisar que no haya pods en `Unknown` (runbook §6) y exportar `KUBECONFIG`.

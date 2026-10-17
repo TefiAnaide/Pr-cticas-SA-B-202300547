@@ -2,6 +2,15 @@ fastapi==0.115.6
 uvicorn[standard]==0.32.1
 psycopg2-binary==2.9.10
 pydantic==2.10.3
-pyjwt==2.10.1
+pyjwt==2.14.0
 httpx==0.28.1
 python-dotenv==1.0.1
+
+# Observabilidad (Practica 10): OpenTelemetry + registros JSON
+opentelemetry-api==1.45.1
+opentelemetry-sdk==1.45.1
+opentelemetry-exporter-otlp-proto-http==1.45.1
+opentelemetry-instrumentation-fastapi==0.66b1
+opentelemetry-instrumentation-httpx==0.66b1
+opentelemetry-instrumentation-psycopg2==0.66b1
+python-json-logger==4.2.0

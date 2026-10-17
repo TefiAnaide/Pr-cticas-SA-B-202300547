@@ -1,10 +1,31 @@
+import logging
 import uuid
 from decimal import Decimal
+
+from opentelemetry import metrics
 
 from src.repositories import pedido_repository
 from src.services import productos_client
 from src.services.productos_client import ProductoNoDisponible
 from src.validators.pedido_validator import PedidoCrear
+
+logger = logging.getLogger("pedidos-service")
+
+# Metricas de negocio (Practica 10): responden preguntas de alguien que no
+# es ingeniero ("cuantas compras se hicieron?", "cuantas se perdieron por
+# falta de stock?", "cuanto se vendio?"). En Prometheus aparecen como
+# pedidos_creados_total, pedidos_rechazados_total{motivo} y
+# pedidos_ingresos_quetzales_total.
+_medidor = metrics.get_meter("pedidos-service")
+pedidos_creados = _medidor.create_counter(
+    "pedidos_creados", description="Pedidos confirmados (compras completadas)."
+)
+pedidos_rechazados = _medidor.create_counter(
+    "pedidos_rechazados", description="Pedidos rechazados, por motivo."
+)
+ingresos = _medidor.create_counter(
+    "pedidos_ingresos_quetzales", description="Monto total de los pedidos confirmados, en quetzales."
+)
 
 
 class PedidoNoEncontrado(Exception):
@@ -21,6 +42,19 @@ class StockNoDisponible(Exception):
 
 
 async def crear_pedido(usuario: dict, datos: PedidoCrear, cookies: dict) -> dict:
+    try:
+        pedido = await _crear_pedido(usuario, datos, cookies)
+    except StockNoDisponible as error:
+        pedidos_rechazados.add(1, {"motivo": "sin_stock"})
+        logger.warning("pedido rechazado", extra={"motivo": "sin_stock", "producto_id": error.producto_id})
+        raise
+    pedidos_creados.add(1)
+    ingresos.add(float(pedido["total"]))
+    logger.info("pedido creado", extra={"pedido_id": str(pedido["id"]), "total": str(pedido["total"])})
+    return pedido
+
+
+async def _crear_pedido(usuario: dict, datos: PedidoCrear, cookies: dict) -> dict:
     items_resueltos = []
     total = Decimal("0")
 

@@ -127,8 +127,8 @@ destino MinIO `Available` y File System Backup de volúmenes.
 - [x] Prueba de pérdida de nodo sobre el clúster reconstruido: 0/48 fallidas.
 - [x] Prueba de idempotencia del bootstrap corregido.
 - [x] Informe de DR, README, preguntas teóricas.
-- [ ] **Commit y push** de: `.gitignore` (raíz), `P9/README.md`, `P9/bootstrap.sh`, `P9/scripts/preparar-reconstruccion.sh`, `P9/doc/*`, `P9/evidencias/*` (nuevos logs).
-- [ ] Video de 5 a 8 minutos; completar URL y minutaje en el README.
+- [x] Commit y push de la documentación y las evidencias (`fe12e3a`).
+- [x] ~~Video~~: no requerido según el auxiliar; anotado en la tabla 4.1 del README.
 - [x] Copias corregidas y documentadas de los verificadores (P9 y P10).
 - [ ] Avisar al auxiliar que se usa `verificar_p9_corregido.sh` y por qué.
 - [ ] El día de la calificación: encender MinIO y el clúster, revisar que no haya pods en `Unknown` (runbook §6) y exportar `KUBECONFIG`.

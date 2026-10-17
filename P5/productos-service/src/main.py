@@ -1,7 +1,14 @@
-from fastapi import FastAPI
+# La observabilidad se inicia ANTES de importar las rutas: importarlas abre
+# el pool de Postgres (src/database/connection.py), y psycopg2 tiene que
+# estar instrumentado para que esas conexiones generen spans.
+from src import observabilidad
 
-from src.graphql.schema import graphql_router
-from src.routes.producto_routes import router as producto_router
+observabilidad.iniciar()
+
+from fastapi import FastAPI  # noqa: E402
+
+from src.graphql.schema import graphql_router  # noqa: E402
+from src.routes.producto_routes import router as producto_router  # noqa: E402
 
 app = FastAPI(
     title="Productos Service",
@@ -14,6 +21,7 @@ app = FastAPI(
 
 app.include_router(producto_router)
 app.include_router(graphql_router, prefix="/productos/graphql")
+observabilidad.instrumentar_app(app)
 
 
 @app.get("/health")

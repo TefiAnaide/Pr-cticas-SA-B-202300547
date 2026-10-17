@@ -30,22 +30,20 @@ RPO **86 s** (objetivo 60 min) · datos restaurados con huella sha256 idéntica 
 | Restauración de datos | [`P9/evidencias/restauracion-datos-20260926-075749.log`](evidencias/restauracion-datos-20260926-075749.log) (borrado de tabla + volumen; 50/50 filas, huella idéntica) y la verificación de la reconstrucción total en [`reconstruccion-20261017-073520.log`](evidencias/reconstruccion-20261017-073520.log) (70/70 filas, huella idéntica). Restore en el clúster: `restaurar-pg-20261017-074604` |
 | Prueba de pérdida de nodo | [`P9/evidencias/perdida-nodo-20261017-074950.log`](evidencias/perdida-nodo-20261017-074950.log) (drenaje de `sa-p9-worker2`: 48 peticiones, 0 fallidas, 100 %). Prueba anterior: [`perdida-nodo-20260926-083729.log`](evidencias/perdida-nodo-20260926-083729.log) |
 | RTO y RPO declarados | **RTO:** objetivo **30 min** → medido **12 min 41 s** (761 s). **RPO:** objetivo **60 min** → medido **86 s** (5 filas escritas después del último respaldo, perdidas a propósito). Justificación y brecha en [`doc/InformeDR.md`](doc/InformeDR.md) |
-| Video demostrativo | `<<COMPLETAR: URL pública>>` — minutaje abajo |
+| Video demostrativo | **No requerido**: el auxiliar indicó que esta entrega no lleva video. La demostración es presencial; el orden sugerido está abajo. |
 
-### Minutaje del video
+### Orden sugerido para la demostración presencial
 
-> Completar con los tiempos reales al grabar.
-
-| Minuto | Punto demostrado |
+| Paso | Punto demostrado |
 |---|---|
-| `00:00` | Sistema sano: `kubectl get applications -n argocd` (8 `Synced/Healthy`), `velero schedule get`, `velero backup get` |
-| `00:00` | Estado remoto: bucket `sa-p9-tfstate` en MinIO, `git ls-files \| grep tfstate` vacío, prueba de bloqueo |
-| `00:00` | `./P9/scripts/preparar-reconstruccion.sh`: datos de referencia y respaldo |
-| `00:00` | `./P9/scripts/destruir.sh`: el clúster desaparece (`kind get clusters`, `docker ps`) |
-| `00:00` | `./P9/bootstrap.sh`: un solo comando, fases y sync-waves en ArgoCD (acelerar la espera) |
-| `00:00` | Verificación: SealedSecrets descifrados, `/health`, huella idéntica, **RTO y RPO impresos** |
-| `00:00` | Pérdida de nodo: `./P9/scripts/prueba-perdida-nodo.sh`, 0 peticiones fallidas |
-| `00:00` | Runbook e informe de DR: brecha y puntos únicos de fallo |
+| 1 | Sistema sano: `kubectl get applications -n argocd` (8 `Synced/Healthy`), `velero schedule get`, `velero backup get` |
+| 2 | Estado remoto: bucket `sa-p9-tfstate` en MinIO, `git ls-files \| grep tfstate` vacío, prueba de bloqueo |
+| 3 | `./P9/scripts/preparar-reconstruccion.sh`: datos de referencia y respaldo |
+| 4 | `./P9/scripts/destruir.sh`: el clúster desaparece (`kind get clusters`, `docker ps`) |
+| 5 | `./P9/bootstrap.sh`: un solo comando, fases y sync-waves en ArgoCD (~13 min) |
+| 6 | Verificación: SealedSecrets descifrados, `/health`, huella idéntica, **RTO y RPO impresos** |
+| 7 | Pérdida de nodo: `./P9/scripts/prueba-perdida-nodo.sh`, 0 peticiones fallidas |
+| 8 | Runbook e informe de DR: brecha y puntos únicos de fallo |
 
 ## Estructura
 

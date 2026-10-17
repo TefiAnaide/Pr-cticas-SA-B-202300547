@@ -25,4 +25,5 @@ COPY package*.json ./
 COPY src ./src
 USER app
 EXPOSE 8080
-CMD ["node", "src/server.js"]
+# --import: el SDK de OpenTelemetry tiene que cargarse antes que la app (ESM).
+CMD ["node", "--import", "./src/instrumentation.js", "src/server.js"]
